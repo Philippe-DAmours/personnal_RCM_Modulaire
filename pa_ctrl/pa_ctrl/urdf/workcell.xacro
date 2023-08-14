@@ -1,0 +1,102 @@
+<?xml version="1.0" ?>
+<robot name="fanuc_crx10ial" xmlns:xacro="http://wiki.ros.org/xacro">
+  <xacro:include filename="$(find fanuc_crx10ia_support)/urdf/crx10ial_macro.xacro"/>
+  <xacro:fanuc_crx10ial prefix=""/>
+  
+  <!--Define additionnal link to robot-->
+  <link name="festool_kit">
+    <visual>
+      <origin xyz="0 0.0 0.078238" rpy="3.1416 0 0"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0.0 0.078238" rpy="3.1416 0 0"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/Festool_colision.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="robot_base_plate">
+    <visual>
+      <origin xyz="0.0 0.121588 0.0" rpy="1.5708 0.0 3.1416"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.dae"/>
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0.0 0.0 0.0" rpy=".0 0.0 0.0"/>
+      <geometry>
+        <box size="0.35 0.2 0.01"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="husky">
+    <visual>
+      <origin xyz="0 0 0" rpy="1.5708 0 3.1416"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.dae"/>
+        <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/-->
+      </geometry>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="1.5708 0 3.1416"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/>
+      </geometry>
+    </collision>
+  </link>
+  
+  <link name="TCP">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <geometry>
+        <sphere radius="0.005"/>
+      </geometry>
+    </visual>
+  </link>
+  
+  <!-- Diefine joint between link-->
+  
+  <joint name="tool0_to_festool_kit" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="tool0"/>
+    <child  link="festool_kit"/>
+  </joint>
+  
+  <joint name="husky_to_robot_base_plate" type="prismatic">
+    <origin xyz="0.0 0.0 0.798396" rpy="0 0 0"/>
+    <parent link="husky"/>
+    <child  link="robot_base_plate"/>
+    <axis xyz="0 0 1"/>
+    <limit effort="4000.0" velocity="0.150" lower="0.0" upper="1.050"/>
+    <!--TODO safety controller/-->
+  </joint>
+  
+  <joint name="robot_base_plate_to_base_link" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="robot_base_plate"/>
+    <child  link="base_link"/>
+  </joint>
+  
+  <joint name="festool_kit_to_TCP" type="fixed">
+    <origin xyz="0 -0.020860 0.141701" rpy="0 0 0"/>
+    <parent link="festool_kit"/>
+    <child  link="TCP"/>
+  </joint>
+  
+  <!--joint name="world_to_husky" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="world"/>
+    <child  link="husky"/>
+  </joint-->   
+  
+  
+  
+  
+  
+  
+</robot>

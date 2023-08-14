@@ -1,0 +1,96 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="camera" default="true" /> 
+	<arg name="offline" default="false" /> 
+	<arg name="robot" default="false" /> 
+
+	<group ns="sensor_used">
+		<param name="camera" type="bool" value="$(arg camera)" />
+		<param name="offline" type="bool" value="$(arg offline)" />
+		<param name="robot"   type="bool" value="$(arg robot)" />
+	</group>
+
+    <group if="$(arg camera)">
+		<group if="$(eval not(offline))">
+			<include file="$(find realsense2_camera)/launch/rs_camera.launch">
+				<!-- https://github.com/IntelRealSense/realsense-ros#installation-instructions -->
+				<arg name="serial_no" value="045322075898" />
+				<arg name="device_type" value="d435" />
+				<arg name="initial_reset" value="true" />
+				<arg name="align_depth" value="true" />
+				<arg name="tf_prefix" value="camera_R435i" />
+				<!--arg name="rosbag_filename" value="" /-->
+				<!--arg name="reconnect_timeout" value="" /-->
+				<!--arg name="clip_distance" value="" /-->
+				<arg name="enable_pointcloud" default="true"/>
+				<arg name="ordered_pc" default="true"/>
+				<arg name="enable_sync" value="true" />
+				<arg name="publish_odom_tf" value="true" />
+
+				<arg name="color_width" value="1280" />
+				<arg name="color_height" value="720" />
+				<arg name="color_fps" default="6"/>
+
+				<arg name="enable_depth" default="true"/>
+				<arg name="depth_width" value="1280" />
+				<arg name="depth_height" value="720" />
+				<arg name="depth_fps" default="6"/>
+
+				<!-- https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md -->
+				<!-- investigate hdr_merge for mask -->
+				<arg name="filters" value="pointcloud, hole_filling, temporal" />
+			</include>
+		</group>
+
+        <!-- Perception node -->
+		<node name="uv_images_analysis" pkg="pa_uv" type="uv_images_analysis.py" respawn="false" output="screen">
+			<remap from="image_scaling" to="/cv_img/image_scaling"/>
+			<remap from="image_otsu_norm" to="/cv_img/image_otsu_norm"/>
+			<remap from="image_otsu_equal" to="/cv_img/image_otsu_equal"/>
+			<remap from="image_otsu_moy" to="/cv_img/image_otsu_moy"/>
+			<remap from="image_moy_med" to="/cv_img/image_moy_med"/>
+			<remap from="image_moy_med_dilate" to="/cv_img/image_moy_med_dilate"/>
+			<remap from="image_moy_bin" to="/cv_img/image_moy_bin"/>
+			<remap from="image_segmented" to="/cv_img/image_segmented"/>
+			<remap from="points_info" to="/cv_img/points_info"/>
+			<remap from="point_cloud_takeA" to="/cv_img/point_cloud_takeA"/>
+			<remap from="point_cloud_planeA" to="/cv_img/point_cloud_planeA"/>
+		</node>
+    </group>
+
+    <!-- Robot node -->
+    <group if="$(arg robot)">
+        <!-- Noting yet -> TODO -->
+	</group>
+
+
+    <!-- Rviz/interface config -->
+	<group if="$(eval robot or camera)">
+		<!-- CURRENT SETUP: TODO-->
+		<!-- Postion of the camera in the map / DON'T move -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="d435i_broadcaster" args="0 0 0 0 0 0 map camera_R435i_color_optical_frame" />
+
+		<!-- Postion of the robot from the camera tf / TODO: adjust depending on hardware setup (3.1416 - 1.57) -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0.32 0.64 0.45 3.1416 0 0 base_link map" />
+
+
+		<!--1-->
+		<group if="$(eval not(robot) and camera)">
+			<node type="rviz" name="rviz" pkg="rviz" args="-d $(find pa_uv)/launch/uv_cam.rviz" />	
+		</group>
+
+		<!--2-->
+		<group if="$(eval robot and not(camera))">
+			<!-- <include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find ur5e_moveit_config)/launch/moveit.rviz" />
+			</include> -->
+		</group>
+
+		<!--3-->
+		<group if="$(eval robot and camera)">
+			<!-- <include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find pa_rgb)/launch/interface_robot_cam_config.rviz" />
+			</include> -->
+		</group>
+	</group>
+</launch>

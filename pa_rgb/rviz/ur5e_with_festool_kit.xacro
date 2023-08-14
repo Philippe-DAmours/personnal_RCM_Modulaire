@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="https://ros.org/wiki/xacro" name="ur5e_with_festool_kit">
+
+  <!-- ur5e -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur5e_macro.xacro" />
+  <!-- end-effector -->
+  <xacro:include filename="festool_kit.xacro" />
+
+  <!-- ur5e -->
+  <!-- The ur5e xacro must be included with passing parameters -->
+  <xacro:ur5e_robot prefix=""/>
+  <!-- end-effector -->
+  <!-- Here we include the end-effector by setting the parameters -->
+  <!-- TODO: check end-effector link name of robot: -->
+  <!-- could be ${prefix}flange or ${prefix}tool0 -->
+  <xacro:festool_kit prefix="" connected_to="tool0"/>
+
+  <!-- define the ur5's position and orientation in the world coordinate system -->
+  <link name="world" />
+  <joint name="world_joint" type="fixed">
+    <parent link="world" />
+    <child link="base_link" /> <!-- TODO: check base_link name of robot -->
+    <origin xyz="0.0 0.0 0.0" rpy="0.0 0.0 0.0" />
+  </joint>
+</robot>

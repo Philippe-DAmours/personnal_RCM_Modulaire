@@ -1,0 +1,92 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="camera" default="true" /> 
+	<arg name="offline" default="false" /> 
+	<arg name="robot" default="false" /> 
+	<arg name="synt_data" default="false" /> 
+
+	<group ns="sensor_used">
+		<param name="camera" type="bool" value="$(arg camera)" />
+		<param name="offline" type="bool" value="$(arg offline)" />
+		<param name="robot"   type="bool" value="$(arg robot)" />
+		<param name="synt_data"   type="bool" value="$(arg synt_data)" />
+	</group>
+
+    <group if="$(arg camera)">
+		<arg name="operating_mode" default="Distance1250mmSingleFreq" />
+		<arg name="exposure_time" default="Exp62_5Us" />
+		<arg name="conversion_gain" default="Low" />
+		<arg name="image_accumulation" default="4" />
+		<arg name="confidence_threshold_enable" default="false" />
+		<arg name="confidence_threshold_min" default="0" />
+		<arg name="spatial_threshold" default="false" />
+		<arg name="node_rate" default="5" />
+
+		<!-- Acquisition node -->
+        <node name="helios_camera_node" pkg="pa_tof" type="helios2_node" output="screen" respawn="false">
+			<param name="operating_mode" type="str" value="$(arg operating_mode)" />
+			<param name="exposure_time" type="str" value="$(arg exposure_time)" />
+			<param name="conversion_gain" type="str" value="$(arg conversion_gain)" />
+			<param name="image_accumulation" type="int" value="$(arg image_accumulation)" />
+			<param name="confidence_threshold_enable" type="bool" value="$(arg confidence_threshold_enable)" />
+			<param name="confidence_threshold_min" type="int" value="$(arg confidence_threshold_min)" />
+			<param name="spatial_threshold" type="bool" value="$(arg spatial_threshold)" />
+			<param name="node_rate" type="int" value="$(arg node_rate)" />
+
+			<remap from="intensity_helios2" to="/helios_camera_node/intensity_helios2"/>
+			<remap from="depth_helios2" to="/helios_camera_node/depth_helios2"/>
+        </node>
+
+        <!-- Perception node -->
+		<node name="texture_analysis" pkg="pa_tof" type="texture_analysis.py" respawn="false" output="screen">
+			<remap from="image_textureA" to="/cv_img/image_textureA"/>
+			<remap from="image_textureB" to="/cv_img/image_textureB"/>
+			<remap from="image_segmented" to="/cv_img/image_segmented"/>
+			<remap from="points_info" to="/cv_img/points_info"/>
+			<remap from="point_cloud_takeA" to="/cv_img/point_cloud_takeA"/>
+			<remap from="point_cloud_takeB" to="/cv_img/point_cloud_takeB"/>
+			<remap from="point_cloud_takeB_inprogress" to="/cv_img/point_cloud_takeB_inprogress"/>
+			<remap from="point_cloud_takeB_warpped" to="/cv_img/point_cloud_takeB_warpped"/>
+			<remap from="point_cloud_normalA" to="/cv_img/point_cloud_normalA"/>
+			<remap from="point_cloud_normalB" to="/cv_img/point_cloud_normalB"/>
+			<remap from="point_cloud_planeA" to="/cv_img/point_cloud_planeA"/>
+			<remap from="point_cloud_planeB" to="/cv_img/point_cloud_planeB"/>
+		</node>
+    </group>
+
+    <!-- Robot node -->
+    <group if="$(arg robot)">
+        <!-- Noting yet -> TODO -->
+	</group>
+
+
+    <!-- Rviz/interface config -->
+	<group if="$(eval robot or camera)">
+		<!-- CURRENT SETUP: TODO-->
+		<!-- Postion of the camera in the map / DON'T move -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="helios2_broadcaster" args="0 0 0 0 0 0 map camera_frame" />
+
+		<!-- Postion of the robot from the camera tf / TODO: adjust depending on hardware setup (3.1416 - 1.57) -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0.32 0.64 0.45 3.1416 0 0 base_link map" />
+
+
+		<!--1-->
+		<group if="$(eval not(robot) and camera)">
+			<node type="rviz" name="rviz" pkg="rviz" args="-d $(find pa_tof)/launch/texture_cam.rviz" />	
+		</group>
+
+		<!--2-->
+		<group if="$(eval robot and not(camera))">
+			<!-- <include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find ur5e_moveit_config)/launch/moveit.rviz" />
+			</include> -->
+		</group>
+
+		<!--3-->
+		<group if="$(eval robot and camera)">
+			<!-- <include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find pa_rgb)/launch/interface_robot_cam_config.rviz" />
+			</include> -->
+		</group>
+	</group>
+</launch>

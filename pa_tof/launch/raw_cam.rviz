@@ -1,0 +1,339 @@
+Panels:
+  - Class: rviz/Displays
+    Help Height: 0
+    Name: Displays
+    Property Tree Widget:
+      Expanded: ~
+      Splitter Ratio: 0.6176470518112183
+    Tree Height: 207
+  - Class: rviz/Selection
+    Name: Selection
+  - Class: rviz/Tool Properties
+    Expanded:
+      - /2D Pose Estimate1
+      - /2D Nav Goal1
+      - /Publish Point1
+    Name: Tool Properties
+    Splitter Ratio: 0.5886790156364441
+  - Class: rviz/Views
+    Expanded:
+      - /Current View1
+    Name: Views
+    Splitter Ratio: 0.5
+  - Class: rviz/Time
+    Name: Time
+    SyncMode: 0
+    SyncSource: PointCloud2_RT
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Save_image
+    Topic: /consol_save_image
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Take_A
+    Topic: /consol_take_image_A
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Take_B
+    Topic: /consol_take_image_B
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Run_algo
+    Topic: /consol_run_algo
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Save_takes
+    Topic: /consol_save_takes
+  - Class: jsk_rviz_plugin/PublishTopic
+    Name: Save_default_takes
+    Topic: /consol_save_default_take_in_bag
+Preferences:
+  PromptSaveOnExit: true
+Toolbars:
+  toolButtonStyle: 2
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Alpha: 0.5
+      Cell Size: 1
+      Class: rviz/Grid
+      Color: 160; 160; 164
+      Enabled: true
+      Line Style:
+        Line Width: 0.029999999329447746
+        Value: Lines
+      Name: Grid
+      Normal Cell Count: 0
+      Offset:
+        X: 0
+        Y: 0
+        Z: 0
+      Plane: XY
+      Plane Cell Count: 10
+      Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /helios_camera_node/intensity_helios2
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_RT
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: i
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PointCloud2_RT
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /helios_camera_node/depth_helios2
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Alpha: 1
+      Class: rviz/Axes
+      Enabled: true
+      Length: 0.20000000298023224
+      Name: Cam_pose
+      Radius: 0.019999999552965164
+      Reference Frame: camera_frame
+      Show Trail: false
+      Value: true
+    - Align Bottom: false
+      Background Alpha: 0.800000011920929
+      Background Color: 0; 0; 0
+      Class: jsk_rviz_plugin/OverlayText
+      Enabled: true
+      Foreground Alpha: 0.800000011920929
+      Foreground Color: 25; 255; 240
+      Invert Shadow: false
+      Name: Info_algo
+      Overtake BG Color Properties: false
+      Overtake FG Color Properties: false
+      Overtake Position Properties: false
+      Topic: /cv_img/points_info
+      Value: true
+      font: DejaVu Sans Mono
+      height: 128
+      left: 0
+      line width: 2
+      text size: 12
+      top: 0
+      width: 128
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_fix
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_cv
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_plain_blur
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_plain
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_masked
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_masked
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_rosin
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_rosin
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_rosin_med
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_rosin_med
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Class: rviz/Image
+      Enabled: true
+      Image Topic: /cv_img/image_segmented
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Image_cv_segmented
+      Normalize Range: true
+      Queue Size: 2
+      Transport Hint: raw
+      Unreliable: false
+      Value: true
+    - Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: i
+      Class: rviz/PointCloud2
+      Color: 255; 255; 255
+      Color Transformer: Intensity
+      Decay Time: 0
+      Enabled: true
+      Invert Rainbow: false
+      Max Color: 255; 255; 255
+      Min Color: 0; 0; 0
+      Name: PC_scaled
+      Position Transformer: XYZ
+      Queue Size: 10
+      Selectable: true
+      Size (Pixels): 3
+      Size (m): 0.009999999776482582
+      Style: Flat Squares
+      Topic: /cv_img/point_cloud_scaled
+      Unreliable: false
+      Use Fixed Frame: true
+      Use rainbow: true
+      Value: true
+    - Class: rviz/Marker
+      Enabled: true
+      Marker Topic: /cv_img/point_cloud_plane
+      Name: PC_Gplane
+      Namespaces:
+        "": true
+      Queue Size: 100
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 48; 48; 48
+    Default Light: true
+    Fixed Frame: camera_frame
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz/Interact
+      Hide Inactive Objects: true
+    - Class: rviz/MoveCamera
+    - Class: rviz/Select
+    - Class: rviz/FocusCamera
+    - Class: rviz/Measure
+    - Class: rviz/SetInitialPose
+      Theta std deviation: 0.2617993950843811
+      Topic: /initialpose
+      X std deviation: 0.5
+      Y std deviation: 0.5
+    - Class: rviz/SetGoal
+      Topic: /move_base_simple/goal
+    - Class: rviz/PublishPoint
+      Single click: true
+      Topic: /clicked_point
+  Value: true
+  Views:
+    Current:
+      Class: rviz/Orbit
+      Distance: 1.896510124206543
+      Enable Stereo Rendering:
+        Stereo Eye Separation: 0.05999999865889549
+        Stereo Focal Distance: 1
+        Swap Stereo Eyes: false
+        Value: false
+      Field of View: 0.7853981852531433
+      Focal Point:
+        X: -0.12285928428173065
+        Y: -0.10358457267284393
+        Z: 0.5071303844451904
+      Focal Shape Fixed Size: true
+      Focal Shape Size: 0.05000000074505806
+      Invert Z Axis: false
+      Name: Current View
+      Near Clip Distance: 0.009999999776482582
+      Pitch: 0.07479683309793472
+      Target Frame: <Fixed Frame>
+      Yaw: 4.753567695617676
+    Saved: ~
+Window Geometry:
+  Displays:
+    collapsed: false
+  Height: 948
+  Hide Left Dock: false
+  Hide Right Dock: false
+  Image_RT:
+    collapsed: false
+  Image_cv:
+    collapsed: false
+  Image_cv_segmented:
+    collapsed: false
+  Image_masked:
+    collapsed: false
+  Image_plain:
+    collapsed: false
+  Image_rosin:
+    collapsed: false
+  Image_rosin_med:
+    collapsed: false
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000001b8fc020000000afb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c00610079007301000001a00000010c000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fc000001cf000000c20000000000fffffffaffffffff0100000002fb0000000c00540061006b0065005f00410000000000ffffffff0000007700fffffffb0000000c00540061006b0065005f00420000000000000001560000007700fffffffc000002b2000000a60000007d0100001cfa000000030100000004fb000000140053006100760065005f0069006d0061006700650100000000000001560000008500fffffffb000000240053006100760065005f00640065006600610075006c0074005f00740061006b006500730100000000ffffffff000000b800fffffffb000000140053006100760065005f00740061006b006500730000000000ffffffff0000007f00fffffffb0000001000520075006e005f0061006c0067006f0100000000ffffffff0000007700ffffff000000010000027500000267fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b2000000000000000000000002000007800000015dfc010000000afb000000100049006d006100670065005f005200540100000000000000da0000007900fffffffb000000100049006d006100670065005f0063007601000000e0000000df0000007400fffffffb000000160049006d006100670065005f0070006c00610069006e01000001c50000012d0000008700fffffffb000000180049006d006100670065005f006d00610073006b0065006401000002f80000011b0000009a00fffffffb000000160049006d006100670065005f0072006f00730069006e0100000419000001290000008700fffffffb0000001e0049006d006100670065005f0072006f00730069006e005f006d00650064010000054800000124000000ad00fffffffb000000240049006d006100670065005f00630076005f007300650067006d0065006e00740065006401000006720000010e000000c800fffffffb000000160049006d006100670065005f00740061006b006500420000000374000001c40000000000000000fb0000001c0049006d006100670065005f00630076005f00740061006b0065004200000005a6000001da0000000000000000fb0000000a00560069006500770073030000004e00000080000002e100000197000000030000078000000039fc0100000002fb0000000800540069006d0065010000000000000780000003bc00fffffffb0000000800540069006d0065010000000000000450000000000000000000000624000001b800000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Run_algo:
+    collapsed: false
+  Save_default_takes:
+    collapsed: false
+  Save_image:
+    collapsed: false
+  Save_takes:
+    collapsed: false
+  Selection:
+    collapsed: false
+  Take_A:
+    collapsed: false
+  Take_B:
+    collapsed: false
+  Time:
+    collapsed: false
+  Tool Properties:
+    collapsed: false
+  Views:
+    collapsed: false
+  Width: 1920
+  X: 0
+  Y: 27

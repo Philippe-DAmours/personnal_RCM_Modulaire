@@ -1,0 +1,152 @@
+<launch>
+
+	<arg name="camera" default="true" /> 
+	<arg name="robot" default="true" /> 
+	<arg name="lidar" default="true" /> 
+
+	<group ns="sensor_used">
+		<param name="camera" type="bool" value="$(arg camera)" />
+		<param name="robot"   type="bool" value="$(arg robot)" />
+		<param name="lidar"   type="bool" value="$(arg lidar)" />
+	</group>
+
+	<group if="$(arg camera)">
+		<include file="$(find realsense2_camera)/launch/rs_camera.launch">
+			<!-- https://github.com/IntelRealSense/realsense-ros#installation-instructions -->
+			<arg name="serial_no" value="045322075898" />
+			<arg name="device_type" value="d435" />
+			<arg name="initial_reset" value="true" />
+			<arg name="align_depth" value="true" />
+			<arg name="tf_prefix" value="camera_R435i" />
+			<!--arg name="rosbag_filename" value="" /-->
+			<!--arg name="reconnect_timeout" value="" /-->
+			<!--arg name="clip_distance" value="" /-->
+			<arg name="enable_sync" value="true" />
+			<arg name="publish_odom_tf" value="true" />
+
+			<arg name="color_width" value="1280" />
+			<arg name="color_height" value="720" />
+			<arg name="color_fps" default="6"/>
+
+			<arg name="depth_width" value="1280" />
+			<arg name="depth_height" value="720" />
+			<arg name="depth_fps" default="6"/>
+
+			<!-- https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md -->
+			<arg name="filters" value="pointcloud, hole_filling, temporal" />
+
+			<!-- For madgwick filter -->
+			<!--arg name="linear_accel_cov" value="1.0"/>
+			<arg name="unite_imu_method" value="linear_interpolation" /-->
+			<!--arg name="enable_pose" value="true" /-->	<!--Not available with D435i-->
+		</include>
+
+		<!-- http://wiki.ros.org/imu_filter_madgwick -->
+		<!--node pkg="imu_filter_madgwick" type="imu_filter_node" name="ImuFilter">
+			<param name="use_mag" type="bool" value="false" />
+			<param name="_publish_tf" type="bool" value="false" />
+			<param name="_world_frame" type="string" value="enu" />
+			<remap from="/imu/data_raw" to="/camera/imu"/>
+		</node-->
+
+		<!-- Perception node -->
+		<node name="video_to_cv_images" pkg="pa_rgb" type="video_to_cv_images.py" respawn="false" output="screen">
+			<remap from="image_gray" to="/cv_img/image_gray"/>
+			<remap from="image_clahe" to="/cv_img/image_clahe"/>
+			<remap from="image_rosin" to="/cv_img/image_rosin"/>
+			<remap from="image_2ponce" to="/cv_img/image_2ponce"/>
+			<remap from="image_rectified" to="/cv_img/image_rectified"/>
+			<remap from="image_filtered_depth" to="/cv_img/image_filtered_depth"/>
+			<remap from="points_info" to="/cv_img/points_info"/>
+			<remap from="/target_interact/feedback" to="/cv_img/target_interact/feedback"/>
+			<remap from="/target_interact/update" to="/cv_img//target_interact/update"/>
+			<remap from="/target_interact/update_full" to="/cv_img/target_interact/update_full"/>
+		</node>
+	</group>
+
+
+	<group if="$(arg robot)">
+		<include file="$(find ur_robot_driver)/launch/ur5e_bringup.launch">
+			<arg name="robot_ip" value="192.168.56.101" />
+			<arg name="kinematics_config" value="$(find pa_rgb)/robot_config/ur5e_rcm_calibration.yaml" />
+		</include>
+
+		<!-- Original UR5e urdf with no tool-->
+		<!--include file="$(find ur5e_moveit_config)/launch/ur5e_moveit_planning_execution.launch" /-->
+
+		<!-- Custom UR5e plus Festool sander urdf AND skip the sim/debug wrapper for simplicity-->
+		<include file="$(find ur5e_rcm_moveit_config)/launch/move_group.launch">
+			<arg name="load_robot_description" value="true" /> 
+			<arg name="path_robot_description" value="$(find pa_rgb)/rviz/ur5e_with_festool_kit.urdf" />
+		</include>
+	</group>
+
+
+	<!-- Lidar 3D-->
+	<group if="$(arg lidar)">
+		<include file="$(find velodyne_pointcloud)/launch/VLP16_points.launch" />
+
+		<node name="plane_scan_node" pkg="pa_rgb" type="plane_scan_node" respawn="false" output="screen"/>
+	</group>
+
+
+	<!-- Rviz/interface config -->
+	<group if="$(eval lidar or robot or camera)">
+		<!-- CURRENT SETUP: rcm's kitchen, lidar in opposite corner, camera on top-->
+		<!-- Postion of the camera in the map / DON'T move -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="d435i_broadcaster" args="0 0 0 0 0 0 map camera_R435i_link" />
+
+		<!-- Postion of the robot from the camera tf / TODO: adjust depending on hardware setup (3.1416 - 1.57) -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="base_link_broadcaster" args="0.32 0.64 0.45 3.1416 0 0 base_link map" />
+
+		<!-- Postion of the lidar from the camera tf / TODO: adjust depending on hardware setup -->
+		<node pkg="tf2_ros" type="static_transform_publisher" name="velodyne_broadcaster" args="0.0 0.0 -0.09 0 0 0 map velodyne" />
+
+
+		<!--1-->
+		<group if="$(eval not(lidar) and not(robot) and camera)">
+			<node type="rviz" name="rviz" pkg="rviz" args="-d $(find pa_rgb)/launch/interface_cam_config.rviz" />	
+		</group>
+
+		<!--2-->
+		<group if="$(eval not(lidar) and robot and not(camera))">
+			<include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find ur5e_moveit_config)/launch/moveit.rviz" />
+			</include>
+		</group>
+
+		<!--3-->
+		<group if="$(eval not(lidar) and robot and camera)">
+			<include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find pa_rgb)/launch/interface_robot_cam_config.rviz" />
+			</include>
+		</group>
+
+		<!--4-->
+		<group if="$(eval lidar and not(robot) and not(camera))">
+			<node type="rviz" name="rviz" pkg="rviz" args="-d $(find pa_rgb)/launch/interface_lidar_config.rviz" />	
+		</group>
+
+		<!--5-->
+		<group if="$(eval lidar and not(robot) and camera)">
+			<node type="rviz" name="rviz" pkg="rviz" args="-d $(find pa_rgb)/launch/interface_lidar_cam_config.rviz" />	
+		</group>
+
+		<!--6-->
+		<group if="$(eval lidar and robot and not(camera))">
+			<include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find pa_rgb)/launch/interface_lidar_robot_config.rviz" />
+			</include>	
+		</group>
+
+		<!--7-->
+		<group if="$(eval lidar and robot and camera)">
+			<include file="$(find ur5e_moveit_config)/launch/moveit_rviz.launch">
+				<arg name="rviz_config" value="$(find pa_rgb)/launch/interface_lidar_robot_cam_config.rviz" />
+			</include>	
+		</group>
+	</group>
+
+
+
+</launch>
