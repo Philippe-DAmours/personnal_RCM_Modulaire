@@ -58,6 +58,10 @@
       </geometry>
     </visual>
   </link>
+
+  <link name="world"/>
+
+  <link name="camera_frame"/>
   
   <!-- Diefine joint between link-->
   
@@ -88,12 +92,17 @@
     <child  link="TCP"/>
   </joint>
   
-  <!--joint name="world_to_husky" type="fixed">
+  <joint name="world_to_husky" type="fixed">
     <origin xyz="0 0 0" rpy="0 0 0" />
     <parent link="world"/>
     <child  link="husky"/>
-  </joint-->   
-  
+  </joint>  
+
+  <joint name="world_to_camera" type="fixed">
+    <parent link="world"/>
+    <child link="camera_frame"/>
+    <origin xyz="-0.25 -0.5 1.25" rpy="0 3.14159 0"/>
+  </joint>
   
   
   

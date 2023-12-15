@@ -1,11 +1,11 @@
 moveit_setup_assistant_config:
   URDF:
     package: pa_ctrl
-    relative_path: urdf/workcell.xacro
+    relative_path: urdf/workcell.urdf
     xacro_args: ""
   SRDF:
     relative_path: config/fanuc_crx10ial.srdf
   CONFIG:
     author_name: Philippe D'Amours
     author_email: philippe.damours@usherbrooke.ca
-    generated_timestamp: 1689887576
+    generated_timestamp: 1702583151
