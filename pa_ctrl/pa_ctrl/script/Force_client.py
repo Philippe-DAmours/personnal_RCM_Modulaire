@@ -42,6 +42,7 @@ if __name__ == "__main__":
         force_client()
     except rospy.ROSInterruptException:
         pass
+    print("out of expetion")
     rospy.init_node('force_client')
 
     force_client()

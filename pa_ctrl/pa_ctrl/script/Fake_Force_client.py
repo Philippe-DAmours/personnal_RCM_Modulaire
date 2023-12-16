@@ -15,24 +15,25 @@ def force_client():
     rospy.init_node('force_client',anonymous=True)
     rate = rospy.Rate(42) #42 hz
 
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.connect((HOST, PORT)) 
+    #with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    #    s.connect((HOST, PORT)) 
         
-        while not rospy.is_shutdown():
-            data = s.recv(1024)
-            #clean up data from bytes string to String
-            data = str(data)
-            data = data[2:]
-            data = data[:-3]
-            data = ' '.join(data.split())
-            #Fe = [float(idx) for idx in data.split(' ')] # exemple to convert to list of float
+    while not rospy.is_shutdown():
+        #data = s.recv(1024)
+        #clean up data from bytes string to String
+        #data = str(data)
+        #data = data[2:]
+        #data = data[:-3]
+        #data = ' '.join(data.split())
+        data = str(2.123) # fake force sensor value
+        #Fe = [float(idx) for idx in data.split(' ')] # exemple to convert to list of float
 
 
-            rospy.loginfo(data)
-            
-            pub.publish(data)
-            #pub.publish(Fe)
-            rate.sleep()
+        rospy.loginfo(data)
+        
+        pub.publish(data)
+        #pub.publish(Fe)
+        rate.sleep()
         
 
         
