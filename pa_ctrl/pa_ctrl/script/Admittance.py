@@ -1,27 +1,34 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 import rospy
 from std_msgs.msg import Float64
+from geometry_msgs.msg import Pose, PoseStamped
+import tf2_ros
+import numpy as np
 
 class AdmittanceControlNode:
     def __init__(self):
         rospy.init_node('admittance_control_node')
 
         # ROS Subscribers for initial position and force
-        rospy.Subscriber('/initial_position', Float64, self.initial_position_callback)
-        rospy.Subscriber('/force_value', Float64, self.force_value_callback)
+        rospy.Subscriber('initial_position', PoseStamped, self.initial_position_callback)
+        rospy.Subscriber('Force_effector', Float64, self.force_value_callback)
 
         # Variables to store initial position and force
         self.xd_a  = 0.0
         self.xd_v  = 0.0
         self.xd_p  = 0.0
 
+        self.initial_position = PoseStamped()
+        self.compliant_pose   = PoseStamped()
+
+
         self.xc_a  = 0.0
         self.xc_v  = 0.0
         self.xc_p  = 0.0
 
         self.f_mes = 0.0
-        self.f_des = 2.0
+        self.f_des = 0.20
 
         #Caractérisation du système
         self.m  = 2.102 #kg
@@ -33,28 +40,29 @@ class AdmittanceControlNode:
       
 
         # ROS Publisher for admittance position
-        self.admittance_position_pub = rospy.Publisher('/admittance_position', Float64, queue_size=10)
+        self.admittance_position_pub = rospy.Publisher('compliant_position', PoseStamped, queue_size=10)
 
     def initial_position_callback(self, data):
         # Callback function for initial position
-        self.initial_position = data.data
-
+        self.initial_position = data
     def force_value_callback(self, data):
         # Callback function for force value
-        self.force_value = data.data
+        self.f_mes = data.data
 
     def admittance_position(self):
         # Example admittance control algorithm
         # Admittance Position = Initial Position + Force Value.
-        admittance_position = self.initial_position + self.force_value
-        self.xc_a = self.xd_a + 1/self.m*(self.f_mes - self.f_des - self.Kd(self.xc_v - self.xd_v) - self.kp(self.xc_p - self.xd_p_))
+        self.xc_a = self.xd_a + 1/self.m*(self.f_mes - self.f_des - self.kd*(self.xc_v - self.xd_v) - self.kp*(self.xc_p - self.xd_p))
         self.xc_v = self.xc_v + self.xc_a*self.ts
         self.xc_p = self.xc_p + self.xc_v*self.ts
         
+        self.compliant_pose = self.initial_position
+        self.compliant_pose.pose.position.z = self.initial_position.pose.position.z + self.xc_p
 
 
         # Publish the computed admittance position
-        self.admittance_position_pub.publish(self.xc_p)
+        self.admittance_position_pub.publish(self.compliant_pose)
+        rospy.loginfo(self.compliant_pose)
 
 def main():
     try:
@@ -62,7 +70,7 @@ def main():
         admittance_node = AdmittanceControlNode()
 
         # Set the control rate (e.g., 10 Hz)
-        rate = rospy.Rate(42)
+        rate = rospy.Rate(admittance_node.rate)
 
         while not rospy.is_shutdown():
             # Compute admittance position in the main loop

@@ -1,22 +1,26 @@
 #!/usr/bin/env python3
-import socket
 import rospy
-import roslib
-import rospkg
 import sys
 from std_msgs.msg import String
+from geometry_msgs.msg import PoseStamped
+import moveit_commander
 
-HOST = "192.168.1.100" # à vérifier
-PORT = 11004
 
-
-def force_client():
-    pub = rospy.Publisher('Force_effector',String,queue_size=10)
-    rospy.init_node('force_client',anonymous=True)
+def initial_position():
+    pub = rospy.Publisher('initial_position',PoseStamped,queue_size=10)
+    rospy.init_node('initial_position',anonymous=True)
+    
     rate = rospy.Rate(42) #42 hz
 
-    #with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-    #    s.connect((HOST, PORT)) 
+    moveit_commander.roscpp_initialize(sys.argv)
+    robot = moveit_commander.RobotCommander()
+    scene = moveit_commander.PlanningSceneInterface()
+    group = moveit_commander.MoveGroupCommander("manipulator")
+
+
+
+    data = group.get_current_pose()
+    
         
     while not rospy.is_shutdown():
         #data = s.recv(1024)
@@ -25,8 +29,8 @@ def force_client():
         #data = data[2:]
         #data = data[:-3]
         #data = ' '.join(data.split())
-        data = str(0.2) # fake force sensor value
-        #Fe = [float(idx) for idx in data.split(' ')] # exemple to convert to list of float
+         
+        
 
 
         rospy.loginfo(data)
@@ -40,9 +44,9 @@ def force_client():
 
 if __name__ == "__main__":
     try:
-        force_client()
+        initial_position()
     except rospy.ROSInterruptException:
         pass
     rospy.init_node('force_client')
 
-    force_client()
+    initial_position()
