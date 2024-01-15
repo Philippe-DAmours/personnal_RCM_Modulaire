@@ -12,7 +12,7 @@ class MoveCommandNode():
         rospy.Subscriber('compliant_position',PoseStamped,self.compliant_position_callback)
         self.group = moveit_commander.MoveGroupCommander("manipulator")
 
-        self.rate = 42 #Hz
+        self.rate = 42/100 #z
         self.condition = True
         self.pose = Pose()
 
@@ -24,7 +24,7 @@ class MoveCommandNode():
     def go(self):
         self.group.set_pose_target(self.pose)
         rospy.loginfo(self.pose)
-        self.group.go(wait=False)
+        self.group.go(wait=True)
         
 def main():
     try:
