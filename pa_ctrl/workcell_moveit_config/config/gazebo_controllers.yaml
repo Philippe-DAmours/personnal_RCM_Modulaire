@@ -1,4 +1,12 @@
+MYROBOT:
 # Publish joint_states
-joint_state_controller:
-  type: joint_state_controller/JointStateController
-  publish_rate: 50
+  joint_state_controller:
+    type: joint_state_controller/JointStateController
+    publish_rate: 50
+
+  # Position Controllers<
+  my_controller_:
+    type: my_controller/MyPositionController
+    joint: husky_to_robot_base_plate
+    gain: 50.1
+

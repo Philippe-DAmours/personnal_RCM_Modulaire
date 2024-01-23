@@ -8,6 +8,9 @@ project(pa_ctrl)
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
+  controller_interface
+  hardware_interface
+  pluginlib
   roscpp
 )
 
@@ -122,8 +125,7 @@ include_directories(
 # add_library(${PROJECT_NAME}
 #   src/${PROJECT_NAME}/pa_ctrl.cpp
 # )
-
-## Add cmake target dependencies of the library
+add_library(my_controller_lib src/My_controller.cpp)
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
 # add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
@@ -147,6 +149,7 @@ include_directories(
 # target_link_libraries(${PROJECT_NAME}_node
 #   ${catkin_LIBRARIES}
 # )
+target_link_libraries(my_controller_lib ${catkin_LIBRARIES})
 
 #############
 ## Install ##

@@ -165,7 +165,7 @@
         <parent link="base_link" />
         <child link="link_1" />
         <axis xyz="0 0 1" />
-        <limit effort="0" lower="-3.141592653589793" upper="3.141592653589793" velocity="2.0943951023931953" />
+        <limit effort="100" lower="-3.141592653589793" upper="3.141592653589793" velocity="2.0943951023931953" />
     </joint>
     <joint name="joint_2" type="revolute">
         <origin rpy="0 0 0" xyz="0 0 0" />
@@ -179,28 +179,28 @@
         <parent link="link_2" />
         <child link="link_3" />
         <axis xyz="0 -1 0" />
-        <limit effort="0" lower="-4.71238898038469" upper="4.71238898038469" velocity="3.141592653589793" />
+        <limit effort="100" lower="-4.71238898038469" upper="4.71238898038469" velocity="3.141592653589793" />
     </joint>
     <joint name="joint_4" type="revolute">
         <origin rpy="0 0 0" xyz="0 0 0" />
         <parent link="link_3" />
         <child link="link_4" />
         <axis xyz="-1 0 0" />
-        <limit effort="0" lower="-3.3161255787892263" upper="3.3161255787892263" velocity="3.141592653589793" />
+        <limit effort="100" lower="-3.3161255787892263" upper="3.3161255787892263" velocity="3.141592653589793" />
     </joint>
     <joint name="joint_5" type="revolute">
         <origin rpy="0 0 0" xyz="0.540 -0.150 0" />
         <parent link="link_4" />
         <child link="link_5" />
         <axis xyz="0 -1 0" />
-        <limit effort="0" lower="-3.141592653589793" upper="3.141592653589793" velocity="3.141592653589793" />
+        <limit effort="100" lower="-3.141592653589793" upper="3.141592653589793" velocity="3.141592653589793" />
     </joint>
     <joint name="joint_6" type="revolute">
         <origin rpy="0 0 0" xyz="0.160 0 0" />
         <parent link="link_5" />
         <child link="link_6" />
         <axis xyz="-1 0 0" />
-        <limit effort="0" lower="-3.3161255787892263" upper="3.3161255787892263" velocity="3.141592653589793" />
+        <limit effort="100" lower="-3.3161255787892263" upper="3.3161255787892263" velocity="3.141592653589793" />
     </joint>
     <!-- ROS-Industrial 'base' frame: base_link to Fanuc World Coordinates transform -->
     <link name="base" />
@@ -397,8 +397,8 @@
         </actuator>
     </transmission>
     <gazebo>
-        <plugin name="gazebo_ros_control">
-            <robotNamespace>/</robotNamespace>
+        <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
+            <robotNamespace>/MYROBOT</robotNamespace>
         </plugin>
     </gazebo>
 </robot>
