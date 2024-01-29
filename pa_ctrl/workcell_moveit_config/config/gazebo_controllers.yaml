@@ -7,6 +7,6 @@ MYROBOT:
   # Position Controllers<
   my_controller_:
     type: my_controller/MyPositionController
-    joint: husky_to_robot_base_plate
+    joint: joint_1
     gain: 50.1
 

@@ -7,7 +7,7 @@ import moveit_commander
 
 
 def initial_position():
-    pub = rospy.Publisher('initial_position',PoseStamped,queue_size=10)
+    pub = rospy.Publisher('/initial_position',PoseStamped,queue_size=10)
     rospy.init_node('initial_position',anonymous=True)
     
     rate = rospy.Rate(42) #42 hz

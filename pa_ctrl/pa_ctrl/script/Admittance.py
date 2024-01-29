@@ -50,7 +50,7 @@ class AdmittanceControlNode:
       
 
         # ROS Publisher for admittance position
-        self.admittance_position_pub = rospy.Publisher('compliant_position', PoseStamped, queue_size=10)
+        self.admittance_position_pub = rospy.Publisher('/compliant_position', PoseStamped, queue_size=10)
 
     def initial_position_callback(self, data):
         # Callback function for initial position  
