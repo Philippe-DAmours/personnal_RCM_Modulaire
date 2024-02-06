@@ -143,7 +143,7 @@ add_library(my_controller_lib src/My_controller.cpp)
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
- add_executable(${PROJECT_NAME}_closed_planner src/closed_planner.cpp)
+#add_executable(${PROJECT_NAME}_closed_planner src/closed_planner.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -161,13 +161,13 @@ add_library(my_controller_lib src/My_controller.cpp)
 # )
 target_link_libraries(my_controller_lib ${catkin_LIBRARIES})
 
-target_link_libraries(${PROJECT_NAME}_closed_planner
-  ${catkin_LIBRARIES}
-)
-
-set_target_properties(${PROJECT_NAME}_closed_planner
-  PROPERTIES OUTPUT_NAME my_planner
-  PREFIX "")
+#target_link_libraries(${PROJECT_NAME}_closed_planner
+#  ${catkin_LIBRARIES}
+#)
+#
+#set_target_properties(${PROJECT_NAME}_closed_planner
+#  PROPERTIES OUTPUT_NAME my_planner
+#  PREFIX "")
 
 #############
 ## Install ##
@@ -191,11 +191,11 @@ set_target_properties(${PROJECT_NAME}_closed_planner
 
 ## Mark libraries for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_libraries.html
-install(TARGETS ${PROJECT_NAME}_closed_planner
-  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
-  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
-)
+#install(TARGETS ${PROJECT_NAME}_closed_planner
+#  ARCHIVE DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  LIBRARY DESTINATION ${CATKIN_PACKAGE_LIB_DESTINATION}
+#  RUNTIME DESTINATION ${CATKIN_GLOBAL_BIN_DESTINATION}
+#)
 
 ## Mark cpp header files for installation
 install(DIRECTORY include/${PROJECT_NAME}/

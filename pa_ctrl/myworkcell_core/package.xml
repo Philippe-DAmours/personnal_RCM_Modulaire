@@ -47,7 +47,7 @@
   <!-- Use test_depend for packages you need only for testing: -->
   <!--   <test_depend>gtest</test_depend> -->
   <!-- Use doc_depend for packages you need only for building documentation: -->
-  <!--   <doc_depend>doxygen</doc_depend> -->
+  <!--   <doc_depend>doxygen</doc  <run_depend>descartes_moveit</run_depend>_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>roscpp</build_depend>
   <build_export_depend>roscpp</build_export_depend>
@@ -59,6 +59,13 @@
   <depend>tf2_ros</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>moveit_ros_planning_interface</depend>
+  <depend>descartes_trajectory</depend>
+  <depend>descartes_planner</depend>
+  <depend>descartes_utilities</depend>
+  <depend>trajectory_msgs</depend>
+  <depend>eigen_conversions</depend>
+  <build_depend>descartes_moveit</build_depend>
+  <exec_depend>descartes_moveit</exec_depend>
 
 
   <!-- The export tag contains other, unspecified, tags -->

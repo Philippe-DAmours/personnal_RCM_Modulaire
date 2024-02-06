@@ -55,10 +55,13 @@ class AdmittanceControlNode:
     def initial_position_callback(self, data):
         # Callback function for initial position  
         self.initial_position = data
+        # rospy.loginfo("callback force is calling back")
         
     def force_value_callback(self, data):
         # Callback function for force value
         self.f_mes = data.data
+        # AdmittanceControlNode.admittance_position()
+        # rospy.loginfo("callback force is calling back")
 
     def admittance_position(self):
         # Example admittance control algorithm
@@ -87,22 +90,28 @@ class AdmittanceControlNode:
         rospy.loginfo(self.compliant_pose)
 
 def main():
-    try:
-        # Create an instance of the AdmittanceControlNode class
-        admittance_node = AdmittanceControlNode()
+    
+    # Create an instance of the AdmittanceControlNode class
+    admittance_node = AdmittanceControlNode()
 
-        # Set the control rate (e.g., 10 Hz)
-        rate = rospy.Rate(admittance_node.rate)
+    
 
-        while not rospy.is_shutdown():
-            # Compute admittance position in the main loop
-            admittance_node.admittance_position()
+    # Set the control rate (e.g., 10 Hz)
+    rate = rospy.Rate(admittance_node.rate)
+    
+    while not rospy.is_shutdown():
+        # Compute admittance position in the main loop
+        admittance_node.admittance_position()
+        # Sleep to maintain the control rate
+        # rate.sleep()
+        rate.sleep()
+    
+        
 
-            # Sleep to maintain the control rate
-            rate.sleep()
-
-    except rospy.ROSInterruptException:
-        pass
+    
+    
 
 if __name__ == "__main__":
+    
     main()
+    

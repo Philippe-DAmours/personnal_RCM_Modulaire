@@ -193,13 +193,13 @@
     <visual>
       <origin rpy="3.1416 0 0" xyz="0 0.0 0.078238"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.dae"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.stl"/>
       </geometry>
     </visual>
     <collision>
       <origin rpy="3.1416 0 0" xyz="0 0.0 0.078238"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/collision/Festool_colision.dae"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/Festool_colision.stl"/>
       </geometry>
     </collision>
   </link>
@@ -207,7 +207,7 @@
     <visual>
       <origin rpy="1.5708 0.0 3.1416" xyz="0.0 0.121588 0.0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.dae"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.stl"/>
       </geometry>
     </visual>
     <collision>
@@ -221,14 +221,14 @@
     <visual>
       <origin rpy="1.5708 0 3.1416" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.dae"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.stl"/>
         <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/-->
       </geometry>
     </visual>
     <collision>
       <origin rpy="1.5708 0 3.1416" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.stl"/>
       </geometry>
     </collision>
   </link>

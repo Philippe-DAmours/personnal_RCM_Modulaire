@@ -30,6 +30,7 @@ public:
                       myworkcell_core::LocalizePart::Response& res)
     {
       // Read last message
+      
       fake_ar_publisher::ARMarkerConstPtr p = last_msg_;
       if (!p) return false;
 
@@ -42,6 +43,16 @@ public:
 
       res.pose = target_pose_from_req.pose;
       return true;
+      
+     //Read last message
+     /* 
+     
+     geometry_msgs::PoseStamped p = last_msg_;
+     geometry_msgs::PoseStamped target_pose_from_req = buffer_.transform(p, req.base_frame);
+
+     res.pose = target_pose_from_req.pose;
+     return true;
+    */
     }
 
     ros::Subscriber ar_sub_;

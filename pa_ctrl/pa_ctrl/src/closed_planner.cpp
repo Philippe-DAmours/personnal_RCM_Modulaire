@@ -21,12 +21,72 @@
 /** 
  * Makes a dummy trajectory for the robot to follow.
  */
-std::vector<descartes_core::TrajectoryPtPtr> makePath();
+std::vector<descartes_core::TrajectoryPtPtr> makePointCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
 
 /**
  * Sends a ROS trajectory to the robot controller
  */
 bool executeTrajectory(const trajectory_msgs::JointTrajectory& trajectory);
+
+/**
+*Difficile de faire subscriber callback et publisher sans faire de class avec methode
+*Faison une class avecmethode callback et exectionTrajectoir
+*/
+class MyPlanner {
+  public:
+    MyPlanner(ros::NodeHandle nh)
+    {
+      point_sub_ = nh.subscribe<geometry_msgs::PoseStamped>("/compliant_position",1,&MyPlanner::makePointCallback,this);
+      
+    }
+
+    geometry_msgs::PoseStamped point;
+
+    std::vector<descartes_core::TrajectoryPtPtr> getpoint()
+    {
+      return poseStampedToTrajectoryPt(point);
+    }
+
+    std::vector<descartes_core::TrajectoryPtPtr> poseStampedToTrajectoryPt(const geometry_msgs::PoseStamped& pose_stamped)
+    {
+      // Create a trajectory point
+      descartes_core::TrajectoryPtPtr trajectory_pt;
+
+      // Create a vector of trajectory point
+      std::vector<descartes_core::TrajectoryPtPtr> trajectory_points;
+  
+      // Set position
+      trajectory_pt->getNominal().head<3>() << pose_stamped.pose.position.x,
+                                               pose_stamped.pose.position.y,
+                                               pose_stamped.pose.position.z;
+  
+      // Set orientation (quaternion)
+      trajectory_pt->getNominalCartPose().segment<4>(3) << pose_stamped.pose.orientation.x,
+                                                    pose_stamped.pose.orientation.y,
+                                                    pose_stamped.pose.orientation.z,
+                                                    pose_stamped.pose.orientation.w;
+  
+      // Optionally set other fields of the trajectory point
+  
+      return trajectory_points.push_back(trajectory_pt);
+    }
+
+    ros::Subscriber point_sub_;
+
+    void makePointCallback(const geometry_msgs::PoseStamped::ConstPtr& msgs)
+    {
+      try
+      {
+        point = msgs;
+      }
+      catch(const std::exception& e)
+      {
+        std::cerr << e.what() << '\n';
+      }
+
+    }
+};
+
 
 int main(int argc, char** argv)
 {
@@ -84,8 +144,8 @@ int main(int argc, char** argv)
 
   // Make the path by calling a helper function. See makePath()'s definition for more discussion about paths.
   // std::vector<descartes_core::TrajectoryPtPtr> points = makePath();
-  ros::Subscriber points = nh.Subscriber("/compliant_position",1,makePointCallback);
-
+  MyPlanner MyPlanner_(nh);
+  std::vector<descartes_core::TrajectoryPtPtr> points = MyPlanner_.getpoint().pose();
   // 3. Now we create a planner that can fuse your kinematic world with the points you want to move the robot
   // along. There are a couple of planners now. DensePlanner is the naive, brute force approach to solving the
   // trajectory. SparsePlanner may be faster for some problems (especially very dense ones), but has recieved
