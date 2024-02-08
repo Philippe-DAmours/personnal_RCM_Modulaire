@@ -13,26 +13,26 @@ MYROBOT:
   my_controller_joint_1:
     type: my_controller/MyPositionController
     joint: joint_1
-    gain: 50.1
+    gain: 150.1
 
   my_controller_joint_2:
     type: my_controller/MyPositionController
     joint: joint_2
-    gain: 50.1
+    gain: 150.1
 
   my_controller_joint_3:
     type: my_controller/MyPositionController
     joint: joint_3
-    gain: 50.1
+    gain: 150.1
   my_controller_joint_4:
     type: my_controller/MyPositionController
     joint: joint_4
-    gain: 50.1
+    gain: 150.1
   my_controller_joint_5:
     type: my_controller/MyPositionController
     joint: joint_5
-    gain: 50.1
+    gain: 150.1
   my_controller_joint_6:
     type: my_controller/MyPositionController
     joint: joint_6
-    gain: 50.1
+    gain: 150.1

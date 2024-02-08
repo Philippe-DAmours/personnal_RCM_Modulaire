@@ -60,13 +60,13 @@ class DescartesCallerNode:
         
         # Transformons la trajectoir en une liste de position de joint publiable
         rospy.loginfo("Publishing command")
-        self.joint_0_pub.publish(self.trajectory.points[1].positions[0])
-        self.joint_1_pub.publish(self.trajectory.points[1].positions[1])
-        self.joint_2_pub.publish(self.trajectory.points[1].positions[2])
-        self.joint_3_pub.publish(self.trajectory.points[1].positions[3])
-        self.joint_4_pub.publish(self.trajectory.points[1].positions[4])
-        self.joint_5_pub.publish(self.trajectory.points[1].positions[5])
-        self.joint_6_pub.publish(self.trajectory.points[1].positions[6])
+        self.joint_0_pub.publish(self.trajectory.trajectory.points[-1].positions[0])
+        self.joint_1_pub.publish(self.trajectory.trajectory.points[-1].positions[1])
+        self.joint_2_pub.publish(self.trajectory.trajectory.points[-1].positions[2])
+        self.joint_3_pub.publish(self.trajectory.trajectory.points[-1].positions[3])
+        self.joint_4_pub.publish(self.trajectory.trajectory.points[-1].positions[4])
+        self.joint_5_pub.publish(self.trajectory.trajectory.points[-1].positions[5])
+        self.joint_6_pub.publish(self.trajectory.trajectory.points[-1].positions[6])
 
 def main():
     descartes_caller_node = DescartesCallerNode()
