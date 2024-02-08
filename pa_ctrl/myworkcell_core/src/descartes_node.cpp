@@ -96,7 +96,7 @@ public:
 
     // Step 3: Tell Descartes to start at the "current" robot position
     ROS_INFO("descartes node : step 3");
-    std::vector<double> start_joints = getCurrentJointState("joint_states");
+    std::vector<double> start_joints = getCurrentJointState("/MYROBOT/joint_states");
     descartes_core::TrajectoryPtPtr pt (new descartes_trajectory::JointTrajectoryPt(start_joints));
     path.front() = pt;
 

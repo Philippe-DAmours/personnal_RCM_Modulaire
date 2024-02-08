@@ -27,7 +27,7 @@
   <include file="$(dirname)/ros_controllers.launch"/>
 
   <!-- Spawn the Gazebo ROS controllers -->
-  <node name="gazebo_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/MYROBOT" args="joint_state_controller my_controller_" />
+  <node name="gazebo_controller_spawner" pkg="controller_manager" type="spawner" respawn="false" output="screen" ns="/MYROBOT" args="joint_state_controller my_controller_joint_0 my_controller_joint_1 my_controller_joint_2 my_controller_joint_3 my_controller_joint_4 my_controller_joint_5 my_controller_joint_6" />
 
   <!-- Given the published joint states, publish tf for the robot links -->
   <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="true" output="screen" >

@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 
 import rospy
-from std_msgs.msg import Float64
+from std_msgs.msg import Float64, String
+import std_msgs
 from geometry_msgs.msg import Pose, PoseStamped, Vector3Stamped, TransformStamped
 import tf2_ros
 import numpy as np
@@ -13,7 +14,7 @@ class AdmittanceControlNode:
 
         # ROS Subscribers for initial position and force
         rospy.Subscriber('initial_position', PoseStamped, self.initial_position_callback)
-        rospy.Subscriber('Force_effector', Float64, self.force_value_callback)
+        rospy.Subscriber('Force_effector', String, self.force_value_callback)
 
         # ROS tf listener
         self.tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
@@ -59,7 +60,7 @@ class AdmittanceControlNode:
         
     def force_value_callback(self, data):
         # Callback function for force value
-        self.f_mes = data.data
+        self.f_mes = float(data.data)
         # AdmittanceControlNode.admittance_position()
         # rospy.loginfo("callback force is calling back")
 
@@ -87,7 +88,7 @@ class AdmittanceControlNode:
 
         # Publish the computed admittance position
         self.admittance_position_pub.publish(self.compliant_pose)
-        rospy.loginfo(self.compliant_pose)
+        # rospy.loginfo(self.compliant_pose)
 
 def main():
     

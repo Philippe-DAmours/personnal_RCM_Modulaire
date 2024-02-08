@@ -29,7 +29,7 @@ def force_client():
         #Fe = [float(idx) for idx in data.split(' ')] # exemple to convert to list of float
 
 
-        rospy.loginfo(data)
+        # rospy.loginfo(data)
         
         pub.publish(data)
         #pub.publish(Fe)
@@ -43,6 +43,3 @@ if __name__ == "__main__":
         force_client()
     except rospy.ROSInterruptException:
         pass
-    rospy.init_node('force_client')
-
-    force_client()

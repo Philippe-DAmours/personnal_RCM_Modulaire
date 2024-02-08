@@ -30,7 +30,6 @@ public:
                       myworkcell_core::LocalizePart::Response& res)
     {
       // Read last message
-      
       fake_ar_publisher::ARMarkerConstPtr p = last_msg_;
       if (!p) return false;
 
