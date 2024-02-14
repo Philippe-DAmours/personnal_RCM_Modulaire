@@ -54,7 +54,9 @@ class DescartesCallerNode:
         res = self.descartes_client(req)
         # self.publish_command(res)
         self.trajectory = res
+        rospy.loginfo(self.trajectory.trajectory.points[-1])
         self.publish_command()
+
 
     def publish_command(self):
         
