@@ -38,7 +38,7 @@ def initial_position():
     data.header.frame_id    =  "world"
     data.pose.position.x    =  1.000
     data.pose.position.y    =  0.001
-    data.pose.position.z    =  1.750
+    data.pose.position.z    =  2.750
 
     data.pose.orientation.x =  0.70711
     data.pose.orientation.y = -4.33e-17

@@ -3,9 +3,9 @@
     <include file="$(find workcell_moveit_config)/launch/planning_context.launch" >
         <arg name="load_robot_description" value="true" />
     </include>
-    
+
     <node name="Fake_initial_position" type="Fake_initial_position.py" pkg="pa_ctrl" output="screen"/>
     <node name="Fake_Force_client" type="Fake_Force_client.py" pkg="pa_ctrl" output="screen"/>
-    <node name="admittance" type="admittance.py" pkg="pa_ctrl" output="screen"/>
-    <node name="descartes_node" type="descartes_node" pkg="myworkcell_core" output="screen"/>
+    <node name="admittance_joint_path" type="admittance_joint_path.py" pkg="pa_ctrl" output="screen"/>
+    <!--node name="descartes_node" type="descartes_node" pkg="myworkcell_core" output="screen"/-->
 </launch>

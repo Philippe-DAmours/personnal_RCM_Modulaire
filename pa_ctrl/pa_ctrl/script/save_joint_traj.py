@@ -17,7 +17,6 @@ class DescartesCallerNode:
         rospy.init_node("descartes_caller_node")
         rospy.loginfo("initializing node")
         # ROS Subscriber for compliante position
-        rospy.Subscriber('compliant_position',PoseStamped, self.admittanceCallback)
 
         # ROS publisher for commande
         self.joint_0_pub = rospy.Publisher("MYROBOT/my_controller_joint_0/command",Float64,queue_size=1)
@@ -28,6 +27,9 @@ class DescartesCallerNode:
         self.joint_5_pub = rospy.Publisher("MYROBOT/my_controller_joint_5/command",Float64,queue_size=1)
         self.joint_6_pub = rospy.Publisher("MYROBOT/my_controller_joint_6/command",Float64,queue_size=1)
 
+        ### ROS publish for save
+        self.joint_traj_pub = rospy.Publisher("joint_traj_to_save",JointTrajectory,queue_size=1)
+
 
         # ROS service client
         self.descartes_client = rospy.ServiceProxy("plan_path", PlanCartesianPath)
@@ -36,17 +38,29 @@ class DescartesCallerNode:
 
         # Initialise variable to initial command
         self.joint_command = [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+    
+        ### Prenons une trajectore de 1000mm à 200mm/s 
+        ### Avec un temps de 250mm par point.
+        
+        init_pos = PoseStamped()
+        init_pos.header.frame_id    =  "world"
+        init_pos.pose.position.x    =  1.000
+        init_pos.pose.position.y    =  0.001
+        init_pos.pose.position.z    =  1.750
+
+        init_pos.pose.orientation.x =  0.70711
+        init_pos.pose.orientation.y = -4.33e-17
+        init_pos.pose.orientation.z =  0.70711
+        init_pos.pose.orientation.w = -4.33e-17
 
         self.compliant_pose = PoseStamped()
 
         self.trajectory = JointTrajectory()
 
-        
+        for z in range(1.750,2.800,0.050):
+            init_pos.pose.position.z = z
+            self.trajectory.points.append(init_pos)
 
-    def admittanceCallback(self,data):
-        self.compliant_pose = data
-        rospy.loginfo_once("callback is calling")
-        self.descarteSrvCall()
         
 
     def descarteSrvCall(self):
