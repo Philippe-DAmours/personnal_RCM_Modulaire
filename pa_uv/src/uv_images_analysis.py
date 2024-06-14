@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
 import sys
@@ -52,14 +53,14 @@ class Timer:
   def start(self):
     """Start a new timer"""
     if self._start_time is not None:
-      raise TimerError(f"Timer is running. Use .stop() to stop it")
+      raise TimerError("Timer is running. Use .stop() to stop it")
 
     self._start_time = time.perf_counter()
 
   def stop(self):
     """Stop the timer, and report the elapsed time"""
     if self._start_time is None:
-      raise TimerError(f"Timer is not running. Use .start() to start it")
+      raise TimerError("Timer is not running. Use .start() to start it")
 
     elapsed_time = time.perf_counter() - self._start_time
     self._start_time = None
@@ -89,9 +90,9 @@ def rectifyImage_withReturn(self, raw):
 class image_converter:
 
   def __init__(self):
-
     # Get plain image database for mask -­> in process TODO
-    plain_data_directory = "/home/introlab/Documents/git_rcm/rcm_poncage/pa_uv/launch/img_plain/"
+    plain_data_directory = "/home/damp2404/catkin_ws/src/RCM_Modulaire/pa_uv/launch/img_plain"
+    
     os.chdir(plain_data_directory)
     img_plain_list = os.listdir(plain_data_directory)
     self.img_plain_array = []
@@ -101,7 +102,7 @@ class image_converter:
       self.img_plain_array.append(cv2.imread(img, 2))
 
     # For data analysis
-    base_directory = "/home/introlab/Documents/git_rcm/rcm_poncage/pa_uv/test_data/"
+    base_directory = "/home/damp2404/Documents/git_rcm/rcm_poncage/pa_uv/test_data"
     test_name = "data_{0}" .format(datetime.now())[:-7]
     self.data_directory = os.path.join(base_directory, test_name)
     os.mkdir(self.data_directory)

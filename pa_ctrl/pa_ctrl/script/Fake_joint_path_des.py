@@ -22,19 +22,19 @@ class PublisherNode:
 
         self.init_pos = PoseStamped()
         self.init_pos.header.frame_id    =  "world"
-        self.init_pos.pose.position.x    =  1.240 #+ 0.050
-        self.init_pos.pose.position.y    = -0.569
-        self.init_pos.pose.position.z    =  0.940
+        self.init_pos.pose.position.x    =  1.04659 #+ 0.050
+        self.init_pos.pose.position.y    =  0.07264
+        self.init_pos.pose.position.z    =  1.5
 
-        self.init_pos.pose.orientation.x =  0.70711
+        #self.init_pos.pose.orientation.x =  0.70711
         #self.init_pos.pose.orientation.y = -4.33e-17
-        self.init_pos.pose.orientation.z =  0.70711
+        #self.init_pos.pose.orientation.z =  0.70711
         #self.init_pos.pose.orientation.w = -4.33e-17
 
-        #self.init_pos.pose.orientation.x =  0.69
-        self.init_pos.pose.orientation.y = -0.023
-        #self.init_pos.pose.orientation.z =  0.711
-        self.init_pos.pose.orientation.w = -0.0698
+        self.init_pos.pose.orientation.x =  0.70205
+        self.init_pos.pose.orientation.y = -0.02629
+        self.init_pos.pose.orientation.z =  0.7088649
+        self.init_pos.pose.orientation.w = -0.06577
 
         self.compliant_pose = self.init_pos
 
@@ -65,20 +65,20 @@ class PublisherNode:
         rospy.loginfo(self.compliant_pose)
         rospy.sleep(0.300)
 
-        self.compliant_pose.pose.position.z = 1.449
-        #self.compliant_pose.pose.position.x =  1.0375 #+ 0.050
+        self.compliant_pose.pose.position.z = 0.94
+        self.compliant_pose.pose.position.x =  1.0375 #+ 0.050
         self.position_pub.publish(self.compliant_pose)
         rospy.loginfo(self.compliant_pose)
         rospy.sleep(0.300)
 
-        self.compliant_pose.pose.position.z = 1.51
-        self.compliant_pose.pose.position.x = 1.20 #+ 0.050
+        self.compliant_pose.pose.position.z = 0.94-0.01
+        self.compliant_pose.pose.position.x = 1.024 #+ 0.050
         self.position_pub.publish(self.compliant_pose)
         rospy.loginfo(self.compliant_pose)
         rospy.sleep(0.300)
 
-        self.compliant_pose.pose.position.z = 0.940
-        self.compliant_pose.pose.position.x = 1.240  #+ 0.050
+        self.compliant_pose.pose.position.z = 1.5
+        self.compliant_pose.pose.position.x = 1.0175 #+ 0.050
 
 
 def main():
