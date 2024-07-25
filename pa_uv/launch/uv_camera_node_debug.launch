@@ -1,0 +1,63 @@
+<?xml version="1.0"?>
+<launch>
+    <arg name="camera" default="true" /> 
+	<arg name="offline" default="false" /> 
+	<arg name="robot" default="false" /> 
+
+	<group ns="sensor_used">
+		<param name="camera" type="bool" value="$(arg camera)" />
+		<param name="offline" type="bool" value="$(arg offline)" />
+		<param name="robot"   type="bool" value="$(arg robot)" />
+	</group>
+
+    <group if="$(arg camera)">
+		<group if="$(eval not(offline))">
+			<!--  -->
+			<include file="$(find realsense2_camera)/launch/rs_camera.launch">
+				<!-- https://github.com/IntelRealSense/realsense-ros#installation-instructions -->
+				<arg name="serial_no" value="045322075898" />
+				<!--arg name="serial_no" value="920312072710" /-->
+				<arg name="device_type" value="d435" />
+				<arg name="initial_reset" value="true" />
+				<arg name="align_depth" value="true" />
+				<arg name="tf_prefix" value="camera_R435i" />
+				<!--arg name="rosbag_filename" value="" /-->
+				<!--arg name="reconnect_timeout" value="" /-->
+				<!--arg name="clip_distance" value="" /-->
+				<arg name="enable_pointcloud" default="true"/>
+				<arg name="ordered_pc" default="true"/>
+				<arg name="enable_sync" value="false" />
+				<!-- <arg name="publish_odom_tf" value="true" /> -->
+
+				<arg name="color_width" value="1280" />
+				<!-- <arg name="color_width" value="740" /> -->
+				<arg name="color_height" value="720" />
+				<!-- <arg name="color_height" value="360" /> -->
+				<arg name="color_fps" default="1"/>
+
+				<arg name="enable_depth" default="true"/>
+				<arg name="depth_width" value="1280" />
+				<!-- <arg name="depth_width" value="740" /> -->
+				<arg name="depth_height" value="720" />
+				<!-- <arg name="depth_height" value="360" /> -->
+				<arg name="depth_fps" default="1"/>
+
+				<!-- https://github.com/IntelRealSense/librealsense/blob/master/doc/post-processing-filters.md -->
+				<!-- investigate hdr_merge for mask -->
+				<arg name="filters" value="pointcloud, hole_filling, temporal" />
+			</include>
+		</group>
+
+        <!-- Perception node -->
+		
+    </group>
+
+    <!-- Robot node -->
+    <group if="$(arg robot)">
+        <!-- Noting yet -> TODO -->
+	</group>
+
+
+    <!-- Rviz/interface config -->
+	
+</launch>

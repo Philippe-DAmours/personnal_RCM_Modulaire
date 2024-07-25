@@ -172,7 +172,7 @@
         <parent link="link_1" />
         <child link="link_2" />
         <axis xyz="0 1 0" />
-        <limit effort="0" lower="-3.141592653589793" upper="3.141592653589793" velocity="2.0943951023931953" />
+        <limit effort="100" lower="-3.141592653589793" upper="3.141592653589793" velocity="2.0943951023931953" />
     </joint>
     <joint name="joint_3" type="revolute">
         <origin rpy="0 0 0" xyz="0 0 0.710" />
@@ -228,7 +228,7 @@
         <visual>
             <origin rpy="3.1416 0 0" xyz="0 0.0 0.078238" />
             <geometry>
-                <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.dae" />
+                <!--mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_colision.dae" /-->
             </geometry>
         </visual>
         <collision>
@@ -247,7 +247,8 @@
         <visual>
             <origin rpy="1.5708 0.0 3.1416" xyz="0.0 0.121588 0.0" />
             <geometry>
-                <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.dae" />
+                <!--mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.dae" /-->
+                <!--box size="0.35 0.2 0.01" /-->
             </geometry>
         </visual>
         <collision>
@@ -266,14 +267,14 @@
         <visual>
             <origin rpy="1.5708 0 3.1416" xyz="0 0 0" />
             <geometry>
-                <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.dae" />
+                <!--mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.dae" /-->
                 <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/-->
             </geometry>
         </visual>
         <collision>
             <origin rpy="1.5708 0 3.1416" xyz="0 0 0" />
             <geometry>
-                <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae" />
+                <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae" /-->
             </geometry>
         </collision>
         <inertial>

@@ -1,4 +1,5 @@
 #include <ros/ros.h>
+//#include <trajectory_msgs/JointTrajectory.h>
 #include "myworkcell_core/PlanCartesianPath.h"
 
 //#include <ur5_demo_descartes/ur5_robot_model.h>
@@ -10,10 +11,14 @@
 #include <descartes_utilities/ros_conversions.h>
 #include <eigen_conversions/eigen_msg.h>
 
+
 std::vector<double> getCurrentJointState(const std::string& topic)
 {
   sensor_msgs::JointStateConstPtr state = ros::topic::waitForMessage<sensor_msgs::JointState>(topic, ros::Duration(0.0));
   if (!state) throw std::runtime_error("Joint state message capture failed");
+  
+  /// Prenons à la place de la position de gazebo, 
+  /// la dernière position envoyé en joint
   return state->position;
 }
 
@@ -67,12 +72,14 @@ public:
     const std::string tcp_frame = "TCP";
 
     // Using the desired frames, let's initialize Descartes
+    ROS_INFO("initialize model");
     if (!model_->initialize(robot_description, group_name, world_frame, tcp_frame))
     {
       ROS_WARN("Descartes RobotModel failed to initialize");
       return false;
     }
 
+    ROS_INFO("initialize planner");
     if (!planner_.initialize(model_))
     {
       ROS_WARN("Descartes Planner failed to initialize");
@@ -96,7 +103,8 @@ public:
 
     // Step 3: Tell Descartes to start at the "current" robot position
     ROS_INFO("descartes node : step 3");
-    std::vector<double> start_joints = getCurrentJointState("/MYROBOT/joint_states");
+    // std::vector<double> start_joints = getCurrentJointState("/MYROBOT/joint_states");
+    std::vector<double> start_joints = getCurrentJointState("/joint_states");
     descartes_core::TrajectoryPtPtr pt (new descartes_trajectory::JointTrajectoryPt(start_joints));
     path.front() = pt;
 
@@ -183,6 +191,8 @@ public:
   {
     using namespace descartes_core;
     using namespace descartes_trajectory;
+    // modification pour avoir seulement un axe free
+    // return TrajectoryPtPtr( new CartTrajectoryPt( TolerancedFrame(pose)) );
     return TrajectoryPtPtr( new AxialSymmetricPt(pose, M_PI/2.0, AxialSymmetricPt::Z_AXIS) );
   }
 

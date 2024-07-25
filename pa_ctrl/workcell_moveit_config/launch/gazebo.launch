@@ -15,6 +15,13 @@
   <!-- Set the robot urdf on the parameter server -->
   <param name="robot_description" textfile="$(find workcell_moveit_config)/config/gazebo_fanuc_crx10ial.urdf" />
 
+  <!-- The semantic description that corresponds to the URDF --> 
+  <param name="robot_description_semantic" textfile="$(find workcell_moveit_config)/config/fanuc_crx10ial.srdf" />
+
+  <group ns="robot_description_kinematics">
+    <rosparam command="load" file="$(find workcell_moveit_config)/config/kinematics.yaml"/>
+  </group>
+  
   <!-- Unpause the simulation after loading the robot model -->
   <arg name="unpause" value="$(eval '' if arg('paused') else '-unpause')" />
 

@@ -1,47 +1,47 @@
-#MYROBOT:
-manipulator_controller:
-  type: effort_controllers/JointTrajectoryController
-  joints:
-    - husky_to_robot_base_plate
-    - joint_1
-    - joint_2
-    - joint_3
-    - joint_4
-    - joint_5
-    - joint_6
-  gains:
-    husky_to_robot_base_plate:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_1:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_2:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_3:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_4:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_5:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
-    joint_6:
-      p: 100
-      d: 1
-      i: 1
-      i_clamp: 1
+MYROBOT:
+  manipulator_controller:
+    type: effort_controllers/JointTrajectoryController
+    joints:
+      - husky_to_robot_base_plate
+      - joint_1
+      - joint_2
+      - joint_3
+      - joint_4
+      - joint_5
+      - joint_6
+    gains:
+      husky_to_robot_base_plate:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_1:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_2:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_3:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_4:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_5:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1
+      joint_6:
+        p: 100
+        d: 1
+        i: 1
+        i_clamp: 1

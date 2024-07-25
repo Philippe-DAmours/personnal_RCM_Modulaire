@@ -1,4 +1,5 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
 from __future__ import print_function
 
 import sys
@@ -13,7 +14,7 @@ import ransac_plane as pyrsc
 import rospy
 import rosbag
 import cv2
-import open3d as o3d
+#import open3d as o3d
 #import pyransac3d as pyrsc
 import numpy as np
 import ros_numpy
@@ -30,6 +31,9 @@ from visualization_msgs.msg import Marker, InteractiveMarker, InteractiveMarkerC
 from std_msgs.msg import Empty
 from jsk_rviz_plugins.msg import OverlayText
 from sensor_msgs.msg import Image, CameraInfo, PointCloud2, PointField
+from opencv_apps.msg import RotatedRectStamped, RotatedRect
+
+#from vision_msgs.msg import BoundingBox2D
 from cv_bridge import CvBridge, CvBridgeError
 from image_geometry import PinholeCameraModel
 from scipy.spatial import KDTree
@@ -52,14 +56,14 @@ class Timer:
   def start(self):
     """Start a new timer"""
     if self._start_time is not None:
-      raise TimerError(f"Timer is running. Use .stop() to stop it")
+      raise TimerError("Timer is running. Use .stop() to stop it")
 
     self._start_time = time.perf_counter()
 
   def stop(self):
     """Stop the timer, and report the elapsed time"""
     if self._start_time is None:
-      raise TimerError(f"Timer is not running. Use .start() to start it")
+      raise TimerError("Timer is not running. Use .start() to start it")
 
     elapsed_time = time.perf_counter() - self._start_time
     self._start_time = None
@@ -89,9 +93,11 @@ def rectifyImage_withReturn(self, raw):
 class image_converter:
 
   def __init__(self):
-
+    ### Wait for realsense2_camera topic
+    #rospy.wait_for_message("/camera/depth/color/points",Image,timeout=15)
     # Get plain image database for mask -­> in process TODO
-    plain_data_directory = "/home/introlab/Documents/git_rcm/rcm_poncage/pa_uv/launch/img_plain/"
+    plain_data_directory = "/home/damp2404/catkin_ws/src/rcm_modulaire/pa_uv/launch/img_plain"
+    
     os.chdir(plain_data_directory)
     img_plain_list = os.listdir(plain_data_directory)
     self.img_plain_array = []
@@ -101,7 +107,7 @@ class image_converter:
       self.img_plain_array.append(cv2.imread(img, 2))
 
     # For data analysis
-    base_directory = "/home/introlab/Documents/git_rcm/rcm_poncage/pa_uv/test_data/"
+    base_directory = "/home/damp2404/Documents/git_rcm/rcm_poncage/pa_uv/test_data"
     test_name = "data_{0}" .format(datetime.now())[:-7]
     self.data_directory = os.path.join(base_directory, test_name)
     os.mkdir(self.data_directory)
@@ -120,6 +126,7 @@ class image_converter:
       self.img_dim_x = rospy.get_param("/camera/realsense2_camera/color_width")
       self.img_dim_y = rospy.get_param("/camera/realsense2_camera/color_height")
 
+
     # Camera calibration
     self.camera_model = PinholeCameraModel()
     self.camera_resolutionX = 1.0  # mm/pixel
@@ -136,7 +143,8 @@ class image_converter:
     self.image_pub_med_dilate = rospy.Publisher("image_med_dilate", Image, queue_size=10) 
     self.image_pub_bin = rospy.Publisher("image_bin", Image, queue_size=10)
     self.image_pub_segmented = rospy.Publisher("image_segmented", Image, queue_size=10) 
-
+    ### Box publisher for traj planification --Philippe D'Amours
+    self.rotated_rect_pub = rospy.Publisher("bounding_box", RotatedRect , queue_size=10)
 
     # POINTCLOUD PIPELINE --------------------------------------------------------------------------------------------------------
     self.pc_sub = rospy.Subscriber("/camera/depth/color/points", PointCloud2, self.callbackPC, queue_size=10)
@@ -283,11 +291,15 @@ class image_converter:
     multi_points_array = np.array([[[0,0],[0,0],[0,0],[0,0]]])
     single_point_array = np.array([[0,0]])
 
+    size = 0
     for i, c in enumerate(contours):
         #print("Rectangle #:", i, " = ", c)
         rect = cv2.minAreaRect(c)
         box = cv2.boxPoints(rect)
         box = np.int0(box)
+        
+        
+        
         
         # Rect side size
         dim1 = np.sqrt( ((box[0,0]-box[1,0])**2)+((box[0,1]-box[1,1])**2) )
@@ -305,14 +317,45 @@ class image_converter:
             else:
                 img_box = cv2.circle(img_box, (int((box[0,0]+box[2,0])/2), int((box[0,1]+box[2,1])/2)), radius=25, color=(255,255,255), thickness=2)
                 single_point_array = np.append(single_point_array, [[(box[0,0]+box[2,0])/2, 
-                                                                    (box[0,1]+box[2,1])/2]], axis=0)  
+                                                                    (box[0,1]+box[2,1])/2]], axis=0)
+            ### Biggest sized box for trajectory --Philippe D'Amours
+            if (dim1 * dim2) > size:
+              biggest_rect = rect
+              size = dim1 * dim2
+            
+    ### Send the biggest box to trajectory pipeline --Philippe D'Amours
+    rotated_rect_ = RotatedRect()
+    rotated_rect_.angle = biggest_rect[2]
+    rotated_rect_.center.x = biggest_rect[0][0] 
+    rotated_rect_.center.y = biggest_rect[0][1] 
+    rotated_rect_.size.height = biggest_rect[1][1]
+    rotated_rect_.size.width  = biggest_rect[1][0]
+    
+    self.rotated_rect_pub.publish(rotated_rect_)
+
 
     #Remove first all zeros value
     dim_array = np.delete(dim_array, 0, 0)   
     multi_points_array = np.delete(multi_points_array, 0, 0)
     single_point_array = np.delete(single_point_array, 0, 0)
 
+
+    
+    
+
     return img_box, dim_array, multi_points_array, single_point_array
+  
+  def point2Dto3DAndPublish(self,x,y):
+    ### take 2d coordinate in pixel and publish pose in camera tf
+
+    # freeze point cloud
+    pc_full = self.pc_raw
+    # remove intensity
+    pc = pc_full[..., :3]
+
+    depth = pc[x][y]
+    pass
+
 
 
   def global_plane(self, pc, color):
@@ -337,13 +380,15 @@ class image_converter:
     orientation_normalized = orientation / np.linalg.norm(orientation)
 
     marker = Marker()
+    #marker.lifetime = rospy.Duration(100)
+    marker.frame_locked = True
     marker.header.frame_id = "camera_R435i_color_optical_frame"
     marker.header.stamp = rospy.Time.now()
     marker.type = 1  # Square shape
     marker.id = 0
     marker.scale.x = 1 # m
     marker.scale.y = 1 # m
-    marker.scale.z = 0.001  # m
+    marker.scale.z = 0.1  # m
     marker.color.r = color[0]
     marker.color.g = color[1]
     marker.color.b = color[2]

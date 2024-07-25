@@ -193,13 +193,13 @@
     <visual>
       <origin rpy="3.1416 0 0" xyz="0 0.0 0.078238"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.stl"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/Festool_v4.dae"/>
       </geometry>
     </visual>
     <collision>
       <origin rpy="3.1416 0 0" xyz="0 0.0 0.078238"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/collision/Festool_colision.stl"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/Festool_colision.dae"/>
       </geometry>
     </collision>
   </link>
@@ -207,7 +207,7 @@
     <visual>
       <origin rpy="1.5708 0.0 3.1416" xyz="0.0 0.121588 0.0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.stl"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_plate.dae"/>
       </geometry>
     </visual>
     <collision>
@@ -221,14 +221,14 @@
     <visual>
       <origin rpy="1.5708 0 3.1416" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.stl"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/base_mobile.dae"/>
         <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/-->
       </geometry>
     </visual>
     <collision>
       <origin rpy="1.5708 0 3.1416" xyz="0 0 0"/>
       <geometry>
-        <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.stl"/>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/>
       </geometry>
     </collision>
   </link>
@@ -241,10 +241,24 @@
     </visual>
   </link>
   <link name="world"/>
-  <link name="camera_frame"/>
+  <link name="camera_R435i_link">
+    <visual>
+      <origin rpy="0 0 3.1416" xyz="0 0 0.0042"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/visual/D435_Solid_simple.dae"/>
+        <!--mesh filename="package://pa_ctrl/rviz/meshes/collision/collision_mesh.dae"/-->
+      </geometry>
+    </visual>
+    <collision>
+      <origin rpy="0 0 3.1416" xyz="0 0 0.0042"/>
+      <geometry>
+        <mesh filename="package://pa_ctrl/rviz/meshes/collision/D435_Solid_collision.dae"/>
+      </geometry>
+    </collision>
+  </link>
   <!-- Diefine joint between link-->
   <joint name="tool0_to_festool_kit" type="fixed">
-    <origin rpy="0 0 0" xyz="0 0 0"/>
+    <origin rpy="0 0 2.3562" xyz="0 0 0.01"/>
     <parent link="tool0"/>
     <child link="festool_kit"/>
   </joint>
@@ -271,10 +285,10 @@
     <parent link="world"/>
     <child link="husky"/>
   </joint>
-  <joint name="world_to_camera" type="fixed">
-    <parent link="world"/>
-    <child link="camera_frame"/>
-    <origin rpy="0 3.14159 0" xyz="-0.25 -0.5 1.25"/>
+  <joint name="tool0_to_camera" type="fixed">
+    <parent link="tool0"/>
+    <child link="camera_R435i_link"/>
+    <!-- <origin xyz="0.100 0 -0.0125" rpy="1.5708 0 1.5708 "/> -->
+    <origin rpy="1.5708 0 0.7854 " xyz="0.07071 -0.07071 -0.0125"/>
   </joint>
 </robot>
-

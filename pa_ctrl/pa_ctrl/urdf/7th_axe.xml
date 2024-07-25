@@ -1,0 +1,6 @@
+<robot file="7th_axe.rounded.dae">
+    <Manipulator name="fanuc_crx10ial">
+        <base>husky</base>
+        <effector>TCP</effector>
+    </Manipulator>
+</robot>
