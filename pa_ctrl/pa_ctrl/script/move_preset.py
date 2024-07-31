@@ -33,9 +33,14 @@ class preset_move:
 
     def appendAndPublish(self):
         rospy.loginfo("Moving to position")
-        rospy.loginfo(self.traj_point.positions)
+        rospy.loginfo("degrees :" + str(self.traj_point.positions))
         self.traj_point.positions = np.radians(self.traj_point.positions)
-        rospy.loginfo(self.traj_point.positions)
+        ### NOTE First joint is in mm. revert deg2rad
+        self.traj_point.positions[0] = np.degrees(self.traj_point.positions[0])
+        ### NOTE: FANUC transforme l'array de rad2deg
+        ### Mettons le premiere joint prismatic en mm°/rad
+        self.traj_point.positions[0] = np.radians(self.traj_point.positions[0])
+        rospy.loginfo("radians :" + str(self.traj_point.positions))
         self.traj.points.append(self.traj_point)
         self.traj_pub.publish(self.traj)
         self.traj.points.clear()
@@ -57,7 +62,8 @@ class preset_move:
         self.appendAndPublish()
 
     def consoleMovePosePreset2(self,data):
-        self.traj_point.positions = [0.0, 0.0, 25.0, -65.0, 0.0, 0.0, -30.64]
+        ### Testons les presets de joints
+        self.traj_point.positions = [10.0, 0.0, 25.0, -65.0, 0.0, 0.0, -30.64]
         self.appendAndPublish()
 
     def consoleMovePosePreset3(self,data):

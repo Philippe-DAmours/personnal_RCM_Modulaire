@@ -22,7 +22,7 @@ class PublisherNode:
 
         self.init_pos = PoseStamped()
         self.init_pos.header.frame_id    =  "world"
-        self.init_pos.pose.position.x    =  1.240 #+ 0.050
+        self.init_pos.pose.position.x    =  1.0 #+ 0.050
         self.init_pos.pose.position.y    = -0.569
         self.init_pos.pose.position.z    =  0.940
 
@@ -72,7 +72,7 @@ class PublisherNode:
         rospy.sleep(0.300)
 
         self.compliant_pose.pose.position.z = 1.51
-        self.compliant_pose.pose.position.x = 1.20 #+ 0.050
+        self.compliant_pose.pose.position.x = 1.10 #+ 0.050
         self.position_pub.publish(self.compliant_pose)
         rospy.loginfo(self.compliant_pose)
         rospy.sleep(0.300)

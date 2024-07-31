@@ -165,8 +165,8 @@ class ComputeIKCallerNode:
         trajectory_point.positions = self.joint_pose.solution.joint_state.position
         self.full_trajectory.header = self.joint_pose.solution.joint_state.header
         ### WARNING: Make sure joint name are in the correct order depending if the state are from
-        ##self.full_trajectory.joint_names = self.joint_pose.solution.joint_state.name
-        self.full_trajectory.joint_names = self.current_joint_pose.name
+        self.full_trajectory.joint_names = self.joint_pose.solution.joint_state.name
+        ##self.full_trajectory.joint_names = self.current_joint_pose.name
         rospy.logwarn(self.full_trajectory.joint_names)
         self.full_trajectory.points.append(trajectory_point)
 
@@ -194,7 +194,7 @@ class ComputeIKCallerNode:
         
         #rospy.loginfo(single_point_traj)
         
-        self.joint_path_command_pub.publish(single_point_traj)
+        #self.joint_path_command_pub.publish(single_point_traj)
         rospy.loginfo(single_point_traj)
 
 

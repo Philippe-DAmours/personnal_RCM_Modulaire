@@ -749,6 +749,9 @@ class traj_planner:
         self.full_trajectory.joint_names = self.joint_pose.solution.joint_state.name
         ##self.full_trajectory.joint_names = self.current_joint_pose.name
         ##rospy.logwarn(self.full_trajectory.joint_names)
+        ### NOTE: FANUC transforme l'array de rad2deg
+        ### Mettons le premiere joint prismatic en mm°/rad
+        trajectory_point.positions[0] = np.radians(trajectory_point.positions[0])
         self.full_trajectory.points.append(trajectory_point)
 
         ### update curent joint with last IK solution
