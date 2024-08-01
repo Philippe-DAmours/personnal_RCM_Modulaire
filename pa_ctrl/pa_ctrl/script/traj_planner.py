@@ -5,6 +5,7 @@ import ransac_plane as pyrsc
 import rospy
 import rosbag
 import cv2
+import socket
 
 import ros_numpy
 import math
@@ -17,7 +18,7 @@ from tf2_msgs.msg import TFMessage
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import numpy as np
 
-from std_msgs.msg import Empty
+from std_msgs.msg import Empty, Int16
 
 from sensor_msgs.msg import Image, CameraInfo, PointCloud2, PointField, JointState
 from cv_bridge import CvBridge, CvBridgeError
@@ -30,6 +31,9 @@ from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from opencv_apps.msg import RotatedRectStamped, RotatedRect, Contour 
 import math
 
+### For force schedule selection
+HOST = "192.168.1.100" ###TODO: Make it a variable with robot_ip arg
+PORT = 11006
 
 class omni_rect:
     def __init__(self) -> None:
@@ -70,7 +74,7 @@ class traj_planner:
         rospy.Subscriber("/point_cloud_plane",Marker,self.callbackMARKER)
         rospy.Subscriber("/console_go_to_marker",Empty,self.callbackGoToMarker)
         rospy.Subscriber("console_pose_marker",Empty,self.consolePoseArrayToMarker)
-
+        rospy.Subscriber("/force_schedule",Int16,self.callbackForceSchedule)
         
         
         self.compute_ik_client = rospy.ServiceProxy("/compute_ik", GetPositionIK)
@@ -156,6 +160,19 @@ class traj_planner:
     def currentJointCallback(self,data):
         rospy.loginfo_once("Traj Planer : JointCallback was here")
         self.current_joint_pose = data
+
+    def callbackForceSchedule(self,data):
+        rate = rospy.Rate(100)
+        try:
+            with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
+                s.connect((HOST, PORT))
+                s.sendall(data.data.to_bytes(16,byteorder='big'))
+
+                rospy.sleep(0.1)
+                s.close()
+
+        except ConnectionRefusedError:
+            print("Connection to", HOST, "on port", PORT, "refused.")
         
     def consoleRunAlgoAndPub(self,data):
         ### From self.new_rect to PoseArray()
