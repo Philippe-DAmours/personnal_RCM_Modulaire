@@ -1,0 +1,153 @@
+-- Software License Agreement (BSD License)
+--
+-- Copyright (c) 2012-2014, TU Delft Robotics Institute
+-- All rights reserved.
+--
+-- Redistribution and use in source and binary forms, with or without
+-- modification, are permitted provided that the following conditions
+-- are met:
+--
+--  * Redistributions of source code must retain the above copyright
+--    notice, this list of conditions and the following disclaimer.
+--  * Redistributions in binary form must reproduce the above
+--    copyright notice, this list of conditions and the following
+--    disclaimer in the documentation and/or other materials provided
+--    with the distribution.
+--  * Neither the name of the TU Delft Robotics Institute nor the names 
+--    of its contributors may be used to endorse or promote products 
+--    derived from this software without specific prior written 
+--    permission.
+--
+-- THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
+-- "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
+-- LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS
+-- FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE
+-- COPYRIGHT OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT,
+-- INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+-- BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+-- LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+-- CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+-- LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN
+-- ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+-- POSSIBILITY OF SUCH DAMAGE.
+
+
+PROGRAM ros_adm
+
+--------------------------------------------------------------------------------
+-- 
+-- ROS-Industrial joint trajectory relay.
+-- 
+-- Currently only supports joint trajectory point streaming.
+-- 
+-- 
+-- Assumptions:
+--   - User Socket Messaging (USM) is supported by robot
+--   - There is only 1 motion group
+--   - The TP program 'ros_movesm' exists on the robot
+-- 
+-- 
+-- Configuration defaults:
+--   - TAG 'S4' used for USM
+--   - Relay TCP port ROS-I default (11000)
+--   - Position register 1 is available
+--   - Integer registers 1 & 2 are available
+--   - Flags 1 & 2 are available
+--   - Joint motion speed is limited to 20%
+--   - Motion termination is at CNT 50%
+-- 
+-- 
+-- author: G.A. vd. Hoorn (TU Delft Robotics Institute)
+-- 
+--------------------------------------------------------------------------------
+%ALPHABETIZE
+%COMMENT = 'r23'
+%NOBUSYLAMP
+%NOLOCKGROUP
+%NOPAUSE = COMMAND + TPENABLE + ERROR
+
+VAR
+    acc         :   REAL
+    vit         :   REAL
+    decal_pos         :   REAL
+
+    kd          :   REAL
+    kp          :   REAL
+    masse       :   REAL
+
+    des_f        :   REAL
+    cur_f        :   REAL
+
+    tspan       :   INTEGER
+
+    real_flag   :   BOOLEAN     -- dummy for the GET_REG
+    int_value   :   INTEGER     -- dummy for the GET_REG
+    real_value :   REAL            -- dummy for the GET_REG
+
+    stat_       :   INTEGER   
+
+    clock_var   :   INTEGER  
+
+    xyz         :   XYZWPREXT
+
+    entry       :   INTEGER     -- dummy for GET_VAR
+
+
+CONST
+--self.xc_a = self.xd_a + 1.0/self.m*(self.f_mes - self.f_des - self.kd*(self.xc_v - self.xd_v) - self.kp*(self.xc_p - self.xd_p))
+--self.xc_v = self.xc_v + self.xc_a*self.ts
+--self.xc_p = self.xc_p + self.xc_v*self.ts
+
+    acc_d       =   0
+    vit_d       =   0
+    pos_d       =   0
+
+    r_kd        =   5
+    r_kp        =   4
+    r_masse     =   3
+    r_des_f      =   6
+    r_tspan      =  19
+
+    pr_adm      = 3
+
+
+BEGIN
+
+    GET_REG(r_kd,real_flag,int_value,kd,stat_)
+    GET_REG(r_kp,real_flag,int_value,kp,stat_)
+    GET_REG(r_masse,real_flag,int_value,masse,stat_)
+    GET_REG(r_des_f,real_flag,int_value,des_f,stat_)
+    GET_REG(r_tspan,real_flag,tspan,real_value,stat_)
+
+    clock_var = 0 
+    CONNECT TIMER TO clock_var
+    
+    vit = 0
+    decal_pos = 0
+
+    xyz.x = 0
+    xyz.y = 0
+    xyz.z = 0
+    xyz.w = 0
+    xyz.p = 0
+    xyz.r = 0
+    xyz.ext1 = 0
+
+    WHILE (TRUE) DO
+        GET_VAR(entry, '*SYSTEM*', '$DCSS_CLLB[1].$EXT_FORCE[3]', cur_f, stat_)
+        IF (clock_var > tspan) THEN
+            clock_var = 0
+            acc = acc_d + 1/masse*(cur_f - des_f - kd*(vit -vit_d) - kp*(decal_pos-pos_d))
+            vit = vit + acc * tspan/1000
+            decal_pos = decal_pos + vit * tspan/1000
+            
+            xyz.z = decal_pos*1000
+
+            SET_EPOS_REG(pr_adm, xyz, stat_)
+        ENDIF
+    ENDWHILE
+
+END ros_adm
+
+
+

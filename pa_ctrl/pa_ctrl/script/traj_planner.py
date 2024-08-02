@@ -64,28 +64,32 @@ class traj_planner:
     ### 
     def __init__(self):
 
+        ### Initiation the node -----------------------------------------------------------------
         rospy.init_node("traj_planer_node")
         rospy.loginfo("traj planner initializing")
-        
-        rospy.Subscriber("bounding_box", RotatedRect,self.callbackBOX,queue_size=10)
-        rospy.Subscriber("joint_states",JointState,self.currentJointCallback,queue_size=10) 
-        rospy.Subscriber("/console_traj_planner", Empty, self.consoleRunAlgoAndPub,queue_size=10)
+
+        ### Callback ----------------------------------------------------------------------------
+        rospy.Subscriber("/bounding_box", RotatedRect,self.callbackBOX,queue_size=10)
+        rospy.Subscriber("/joint_states",JointState,self.currentJointCallback,queue_size=10) 
         rospy.Subscriber("/camera/depth/color/points",PointCloud2, self.callbackPC)
         rospy.Subscriber("/point_cloud_plane",Marker,self.callbackMARKER)
-        rospy.Subscriber("/console_go_to_marker",Empty,self.callbackGoToMarker)
-        rospy.Subscriber("console_pose_marker",Empty,self.consolePoseArrayToMarker)
         rospy.Subscriber("/force_schedule",Int16,self.callbackForceSchedule)
-        
-        
+
+        ### Callback for the console command made by the operator ------------------------------
+        rospy.Subscriber("/console_traj_planner", Empty, self.consoleRunAlgoAndPub,queue_size=10)
+        rospy.Subscriber("/console_go_to_marker",Empty,self.callbackGoToMarker)
+        rospy.Subscriber("/console_pose_marker",Empty,self.consolePoseArrayToMarker)
+
+        ### Service Proxy ----------------------------------------------------------------------        
         self.compute_ik_client = rospy.ServiceProxy("/compute_ik", GetPositionIK)
 
+        ### Topic Publisher --------------------------------------------------------------------
         self.traj_pub = rospy.Publisher("/joint_path_command",JointTrajectory, queue_size=1)
         self.pose_marker_pub = rospy.Publisher("/pose_marker_array",MarkerArray,queue_size=10)
         self.corrected_plane_marker_pub = rospy.Publisher("/corrected_plane_marker",Marker,queue_size=1)
         
-        self.rect = RotatedRect()
-        
-        
+        #### Class Variable --------------------------------------------------------------------
+        self.rect               = RotatedRect()
         self.pose_array_        = PoseArray()
         self.point_             = Point()
         self.right_rect_        = RotatedRect()
@@ -95,10 +99,18 @@ class traj_planner:
         self.points             = []
         self.current_joint_pose = JointState()
         self.full_trajectory    = JointTrajectory()
-
+        self.force_schedule     = 10
         self.last_joint_solution= 0
+        self.fraction_effective_whith = 0.85
 
         self.pose_array_.header.frame_id = "camera_R435i_link"
+
+
+        ### ROS param ---------------------------------------------------------------------------
+        if rospy.has_param("/traj_planner/robot_ip"):
+            self.host = rospy.get_param("/traj_planner/robot_ip")
+        else:
+            self.host = "192.168.1.100"
 
         if rospy.has_param("/camera/realsense2_camera/depth_width"):
             self.img_dim_x = rospy.get_param("/camera/realsense2_camera/depth_width")
@@ -108,6 +120,7 @@ class traj_planner:
             self.img_dim_y = rospy.get_param("/camera/realsense2_camera/depth_height")
         else:
             self.img_dim_y = 720
+
         self.pc_raw = np.zeros((self.img_dim_y,self.img_dim_x, 3), dtype=float)
         
         
@@ -152,10 +165,6 @@ class traj_planner:
         self.new_rect = data
         rospy.loginfo_once("Traj Planer : callbackBox was here")
         ### WARNING : opencv_apps.msg RotatedRect() is not the same as cv2.minrect
-        #box = cv2.boxPoints(self.new_rect)
-        #box = np.int0(box)
-        #self.box = box
-        
 
     def currentJointCallback(self,data):
         rospy.loginfo_once("Traj Planer : JointCallback was here")
@@ -165,25 +174,31 @@ class traj_planner:
         rate = rospy.Rate(100)
         try:
             with socket.socket(socket.AF_INET,socket.SOCK_STREAM) as s:
-                s.connect((HOST, PORT))
+                s.connect((self.host, PORT))
                 s.sendall(data.data.to_bytes(16,byteorder='big'))
 
                 rospy.sleep(0.1)
                 s.close()
 
         except ConnectionRefusedError:
-            print("Connection to", HOST, "on port", PORT, "refused.")
+            print("Connection to", self.host, "on port", PORT, "refused.")
         
     def consoleRunAlgoAndPub(self,data):
+        ### First send force schedule to make it's at the correct one before sending trajectory
+        self.publishschedule()
+
         ### From self.new_rect to PoseArray()
         self.RectangleSegmentation()
+
         ### From PoseArray to self.full_trajectory
         self.PoseArrayToIKSrvCall()
+
         ### Publish self.fulltraject
         self.PublishTraj()
         
 
-
+    def publishschedule(self):
+        self.callbackForceSchedule(self.force_schedule)
 
         
     def EstimateXYresolution(self):
@@ -206,7 +221,6 @@ class traj_planner:
     def callbackMARKER(self, data):
         self.marker = data
         rospy.loginfo_once("Traj Planer : CallbackMARKER was here")
-        ### Where is camera ? where is market in camera ? where is marker in world
         self.marker.header.frame_id = "camera_R435i_link"
         self.corrected_plane_marker_pub.publish(self.marker)
         
@@ -214,10 +228,9 @@ class traj_planner:
         
 
     def callbackGoToMarker(self,data):
-        ### Where is camera, marker ?
         rospy.loginfo(self.marker.pose)
         rospy.loginfo_once("Traj Planer : callbackGoToMarker was here")
-        #self.marker.header.frame_id = "camera_R435i_link"
+        ##self.marker.header.frame_id = "camera_R435i_link"
         tfbuffer = tf2_ros.Buffer(rospy.Duration(100.0))
         
         
@@ -235,7 +248,6 @@ class traj_planner:
         rospy.loginfo(self.pose_transformed)
         ##self.computeIKSrvCall(self.pose_transformed.pose)
         self.computeIKSrvCall(self.marker.pose)
-        #self.GoToMarker()
         self.PublishTraj()
         
 
@@ -259,7 +271,7 @@ class traj_planner:
 
         rospy.loginfo(self.new_rect)
         
-        ### Estimate
+        ### Estimate resolution
         self.EstimateXYresolution()
 
         ### The diameter of the tool
@@ -278,7 +290,7 @@ class traj_planner:
         self.D_sander_mm = 225 # (mm)
         D_sander_px_x = self.D_sander_mm / self.camera_resolutionX
         D_sander_px_y = self.D_sander_mm / self.camera_resolutionY
-        self.Effective_width_px = (D_sander_px_x + D_sander_px_y)/2 * 0.85 ### TODO : Determin effective width more regourously
+        self.Effective_width_px = (D_sander_px_x + D_sander_px_y)/2 * self.fraction_effective_whith 
 
 
         ### Le premier point de la boite est le point le plus bas (+y), puis clockwise
@@ -293,6 +305,7 @@ class traj_planner:
             ### joint vertical
             rospy.loginfo("Verticle joint")
             self.rect_type = 0
+            self.rect_type_angle = 90
             
             ### Right rectangle
             self.right_rect_.angle = self.rect.angle
@@ -313,27 +326,12 @@ class traj_planner:
             self.center_rect_.size.width = self.Effective_width_px
             self.center_rect_.size.height = self.rect.size.height
 
-            self.rects = []
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -90
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.left_rect_.center.x
-            omni_rect_.y = self.left_rect_.center.y
-            self.rects.append(omni_rect_)
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -90 -180
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.right_rect_.center.x
-            omni_rect_.y = self.right_rect_.center.y
-            self.rects.append(omni_rect_)
-
             
         elif (self.rect.angle<-85 and self.rect.size.width>=self.rect.size.height):
             ### joint vertical but fliped up right
             rospy.loginfo("Verticle joint")
             self.rect_type = 1
+            self.rect_type_angle = 0
 
             ### Right rectangle
             self.right_rect_.angle = self.rect.angle
@@ -354,27 +352,12 @@ class traj_planner:
             self.center_rect_.size.width = self.rect.size.width
             self.center_rect_.size.height = self.Effective_width_px
             
-            self.rects = []
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.left_rect_.center.x
-            omni_rect_.y = self.left_rect_.center.y
-            self.rects.append(omni_rect_)
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -180
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.right_rect_.center.x
-            omni_rect_.y = self.right_rect_.center.y
-            self.rects.append(omni_rect_)
-
 
         elif (self.rect.angle>-5 and self.rect.size.width>=self.rect.size.height) :
             ### joint horizontal 
             rospy.loginfo("Horizontal joint")
             self.rect_type = 2
+            self.rect_type_angle = 180
 
             ### Right rectangle
             self.right_rect_.angle = self.rect.angle
@@ -395,27 +378,12 @@ class traj_planner:
             self.center_rect_.size.width = self.rect.size.width
             self.center_rect_.size.height = self.Effective_width_px
 
-            self.rects = []
-            
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -180
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.left_rect_.center.x
-            omni_rect_.y = self.left_rect_.center.y
-            self.rects.append(omni_rect_)
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -180 -180
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.right_rect_.center.x
-            omni_rect_.y = self.right_rect_.center.y
-            self.rects.append(omni_rect_)
-            
             
         elif (self.rect.angle<-85 and self.rect.size.width<=self.rect.size.height):
             ### joint horizontal
             rospy.loginfo("Horizontal joint")
             self.rect_type = 3
+            self.rect_type_angle = 270
 
             ### Right rectangle
             self.right_rect_.angle = self.rect.angle
@@ -436,36 +404,35 @@ class traj_planner:
             self.center_rect_.size.width  = self.Effective_width_px      
             self.center_rect_.size.height = self.rect.size.height
 
-            self.rects = []
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -270
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.left_rect_.center.x
-            omni_rect_.y = self.left_rect_.center.y
-            self.rects.append(omni_rect_)
-
-            omni_rect_ = omni_rect()
-            omni_rect_.angle = self.left_rect_.angle -270 -180
-            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
-            omni_rect_.x = self.right_rect_.center.x
-            omni_rect_.y = self.right_rect_.center.y
-            self.rects.append(omni_rect_)
-
-
 
         else:
             ### Erreur : Joint en diagonal
             rospy.logwarn("Erreur: Unexpected joint orrientation")
 
-        #rospy.loginfo("rect type : " + str(self.rect_type))
-        #rospy.loginfo("right_rect \n" + "angle:"+str(self.right_rect_.angle) + "\n x:" + str(self.right_rect_.center.x) + "\n y:" + str(self.right_rect_.center.y))
-        #rospy.loginfo("left_rect \n" + "angle:"+str(self.left_rect_.angle) + "\n x:" + str(self.left_rect_.center.x) + "\n y:" + str(self.left_rect_.center.y))
-        #rospy.loginfo("angle:"+str(self.center_rect_.angle) + "\n x:" + str(self.center_rect_.center.x) + "\n y:" + str(self.center_rect_.center.y))
+        self.rects = []
 
-        ### Check the size of the rectangle to segmente in 3 or 2
+        omni_rect_ = omni_rect()
+        omni_rect_.angle = self.left_rect_.angle -self.rect_type_angle
+        omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
+        omni_rect_.x = self.left_rect_.center.x
+        omni_rect_.y = self.left_rect_.center.y
+        self.rects.append(omni_rect_)
+
+        omni_rect_ = omni_rect()
+        omni_rect_.angle = self.left_rect_.angle -self.rect_type_angle -180
+        omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
+        omni_rect_.x = self.right_rect_.center.x
+        omni_rect_.y = self.right_rect_.center.y
+        self.rects.append(omni_rect_)
 
         
+
+        ##rospy.loginfo("rect type : " + str(self.rect_type))
+        ##rospy.loginfo("right_rect \n" + "angle:"+str(self.right_rect_.angle) + "\n x:" + str(self.right_rect_.center.x) + "\n y:" + str(self.right_rect_.center.y))
+        ##rospy.loginfo("left_rect \n" + "angle:"+str(self.left_rect_.angle) + "\n x:" + str(self.left_rect_.center.x) + "\n y:" + str(self.left_rect_.center.y))
+        ##rospy.loginfo("angle:"+str(self.center_rect_.angle) + "\n x:" + str(self.center_rect_.center.x) + "\n y:" + str(self.center_rect_.center.y))
+
+        ### Check the size of the rectangle to segmente in 3 or 2
         if (self.rect.size.width > self.Effective_width_px * 3 ) and (self.rect.size.height > self.Effective_width_px * 3 ):
             ### The rectangle is too wide for 3 pass.
             
@@ -506,9 +473,8 @@ class traj_planner:
         rospy.loginfo("rectangles array")
 
         for rect in self.rects :
-            #rospy.loginfo("angle:"+str(rect.angle) + "\n x:" + str(rect.x) + "\n y:" + str(rect.y))
+            ##rospy.loginfo("angle:"+str(rect.angle) + "\n x:" + str(rect.x) + "\n y:" + str(rect.y))
             
-
             point = Point()
             point.x = rect.x - math.cos(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px)/2
             point.y = rect.y - math.sin(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px)/2 
@@ -522,9 +488,6 @@ class traj_planner:
             point.y = rect.y + math.sin(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px+20)/2
             self.points.append(point)
             
-
-        
-
         ### Let's do orientation by localy checking the point cloud
         ### Make sure no point is out of the plaster by taking a small square
 
@@ -578,9 +541,6 @@ class traj_planner:
 
         self.pose = Pose()
         
-        ##self.pose.position.x    = point.x * self.camera_resolutionX / 1000 ### resolution is an indirect and imprecise
-        ##self.pose.position.y    = point.y * self.camera_resolutionY / 1000
-        ##self.pose.position.z    = distance ### Might not be the best way to get distance
         self.pose.position.x    = pc[point.y,point.x,0] ### The orders of x and y need to be changed
         self.pose.position.y    = pc[point.y,point.x,1]
         self.pose.position.z    = pc[point.y,point.x,2] -0.01 ### Retract 10mm from the wall in camera frame
@@ -616,7 +576,6 @@ class traj_planner:
             marker.color.r = 1.0 - 0.1*idx
             marker.color.g = 0.0
             marker.color.b = 0.0 + 0.1*idx
-            ##marker.color.a = 0.5
             marker.color.a = 1.0 
             marker.frame_locked = False
             marker_array.markers.append(marker)
@@ -652,7 +611,6 @@ class traj_planner:
             self.computeIKSrvCall(pose)
 
 
-
     def computeIKSrvCall(self,pose):
         ### PoseStamped() to joint_pose
         req = PositionIKRequest() ### Take only one PoseStamped() per request
@@ -668,11 +626,9 @@ class traj_planner:
 
         req.ik_link_name = "TCP"
         req.pose_stamped.pose = pose
-        #req.pose_stamped.header = self.pose_array_.header
         req.pose_stamped.header.frame_id = "camera_R435i_link"
-        #req.pose_stamped = self.pose_transformed
-        #rospy.loginfo("Trying IK for pose")
-        #rospy.loginfo(req.pose_stamped)
+        ##rospy.loginfo("Trying IK for pose")
+        ##rospy.loginfo(req.pose_stamped)
 
         ### Override orrientation
         ##req.pose_stamped.pose.orientation.x = 0.70700
@@ -778,16 +734,8 @@ class traj_planner:
 
         
 
-    def computeFKSrvCall(self,trajectory_point):
-        ### check the joint pose
-        #trajectory_point =
-        #req =
-        pass
-
 def main():
-
     traj_planner_node = traj_planner()
-
     rospy.spin()
 
 if __name__ == "__main__":

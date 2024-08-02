@@ -46,7 +46,9 @@
   </group>
 
   <!-- traj_planer pipeline from image to trajectory_msgs-->
-  <node name="traj_planner" pkg="pa_ctrl" type="traj_planner.py" respawn="false" output="screen"/>
+  <node name="traj_planner" pkg="pa_ctrl" type="traj_planner.py" respawn="false" output="screen">
+    <param name="robot_ip" value="$(arg robot_ip)"/>
+  </node>
 
 
 

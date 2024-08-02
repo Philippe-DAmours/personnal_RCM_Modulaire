@@ -332,7 +332,7 @@ class image_converter:
     rotated_rect_.size.width  = biggest_rect[0][1]
     
     self.rotated_rect_pub.publish(rotated_rect_)
-
+    ###
 
     #Remove first all zeros value
     dim_array = np.delete(dim_array, 0, 0)   

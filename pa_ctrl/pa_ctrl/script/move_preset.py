@@ -4,6 +4,7 @@ import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
 from std_msgs.msg import Empty
+from sensor_msgs.msg import JointState
 import math
 import numpy as np
 
@@ -13,6 +14,8 @@ class preset_move:
 
         self.traj_point = JointTrajectoryPoint()
         self.traj = JointTrajectory()
+        self.joint_state = JointState()
+        self.quicksave_joint_state = JointState()
 
         self.traj_pub = rospy.Publisher("/joint_path_command",JointTrajectory,queue_size=1)
         self.traj_point.time_from_start = rospy.Duration(0.3)
@@ -27,6 +30,11 @@ class preset_move:
         rospy.Subscriber("/console_move_pose_2",Empty,self.consoleMovePosePreset2)
         rospy.Subscriber("/console_move_pose_3",Empty,self.consoleMovePosePreset3)
         rospy.Subscriber("/console_move_pose_4",Empty,self.consoleMovePosePreset4)
+        rospy.Subscriber("/console_move_pose_quicksave",Empty,self.consoleMovePoseQuicksave)
+        
+        rospy.Subscriber("/console_quicksave_pose",Empty,self.consoleQuicksavePose)
+
+        rospy.Subscriber("/joint_states",JointState,self.callbackJointPose)
 
 
         rospy.loginfo("preset node initialized")
@@ -75,6 +83,20 @@ class preset_move:
         self.traj_point.positions = np.degrees(self.traj_point.positions)
         self.appendAndPublish()
 
+    def consoleMovePoseQuicksave(self,data):
+        self.traj_point.positions = self.quicksave_joint_state.position
+        self.appendAndPublish()
+
+    def callbackJointPose(self,data):
+        ### REceive position in radiant and with 7th axe at last
+        self.joint_state = data
+
+    def consoleQuicksavePose(self,data):
+        self.quicksave_joint_state.position.append(self.joint_state.position[-1])
+        self.quicksave_joint_state.position.extend(self.joint_state.position[0:6])
+        self.quicksave_joint_state.position = np.degrees(self.quicksave_joint_state.position)
+        self.quicksave_joint_state.position[0] = np.radians(self.quicksave_joint_state.position[0])
+        rospy.loginfo("Position quicksaved at : \n" + str(self.quicksave_joint_state.position))
         
 
 def main():
