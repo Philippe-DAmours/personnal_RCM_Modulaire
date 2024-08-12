@@ -399,6 +399,7 @@ BEGIN
 							--stat_ = exec_move_(pkt_in_, cfg_) -- dummy exec_move to call unwait
 
 							-- TPE completed -> reset nb_traj and cur_traj
+						
 							WAIT FOR (FLG[3] = OFF)
 							
 							--SET_INT_REG(schedule_reg,0,stat_) --Commented after chage to schedule
@@ -772,12 +773,22 @@ BEGIN
 	ENDIF
 	
 	-- Pause and unpause task to avoid global variable error  to make sure programe is closed
-	PAUSE_TASK('ROSTRAJ',false,false,stat__)
+	value_int = PG_RUNNING
+	PAUSE_TASK('ROSTRAJ',FALSE,FALSE,stat__)
 	WHILE (value_int <> PG_PAUSED) DO
+		DELAY 10
+		GET_TSK_INFO('ROSTRAJ', task_no, TSK_STATUS , value_int, value_str, stat__)
+	ENDWHILE	
+	WHILE (value_int <> PG_RUNNING) DO
+		CONT_TASK('ROSTRAJ',stat__)
+		DELAY 10
 		GET_TSK_INFO('ROSTRAJ', task_no, TSK_STATUS , value_int, value_str, stat__)
 	ENDWHILE
-	CONT_TASK('ROSTRAJ',stat__)
 	
+	DELAY 20
+	GET_TSK_INFO('ROSTRAJ', task_no, TSK_STATUS , value_int, value_str, stat__)
+	DELAY 10
+	log_error_a('SHOULD BE PG_RUNNING',value_int)
 
 	-- Open the to_prog with the Read/Write access
     OPEN_TPE(prog_name,TPE_RWACC,TPE_NOREJ,open_id,stat__)

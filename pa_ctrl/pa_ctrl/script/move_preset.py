@@ -26,6 +26,7 @@ class preset_move:
         rospy.Subscriber("/console_move_pose_zero",Empty,self.consoleMovePoseZero)
         rospy.Subscriber("/console_move_pose_normal",Empty,self.consoleMovePoseNormal)
         rospy.Subscriber("/console_move_pose_travel",Empty,self.consoleMovePoseTravel)
+        rospy.Subscriber("/console_move_pose_camera",Empty,self.consoleMovePoseCamera)
         rospy.Subscriber("/console_move_pose_1",Empty,self.consoleMovePosePreset1)
         rospy.Subscriber("/console_move_pose_2",Empty,self.consoleMovePosePreset2)
         rospy.Subscriber("/console_move_pose_3",Empty,self.consoleMovePosePreset3)
@@ -63,7 +64,13 @@ class preset_move:
         self.appendAndPublish()
 
     def consoleMovePoseTravel(self,data):
-        pass
+        self.traj_point.positions = [0.0, 0.0, 0.0, -70.0, 0.0, -20.0, 0.0]
+        self.appendAndPublish()
+
+    def consoleMovePoseCamera(self,data):
+        self.traj_point.positions = [0.0, 0.0, 38.0, -53.50, 0.0, -11.0, -40.70]
+        self.appendAndPublish()
+
 
     def consoleMovePosePreset1(self,data):
         self.traj_point.positions = [0.01, 11.0, 56.33, -104.7, -19.19, 7.19, -30.64]

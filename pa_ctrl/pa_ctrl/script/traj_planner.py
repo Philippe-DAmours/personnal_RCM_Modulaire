@@ -32,7 +32,7 @@ from opencv_apps.msg import RotatedRectStamped, RotatedRect, Contour
 import math
 
 ### For force schedule selection
-HOST = "192.168.1.100" ###TODO: Make it a variable with robot_ip arg
+HOST = "192.168.1.100" ###DONE: Make it a variable with robot_ip arg
 PORT = 11006
 
 class omni_rect:
@@ -185,7 +185,7 @@ class traj_planner:
         
     def consoleRunAlgoAndPub(self,data):
         ### First send force schedule to make it's at the correct one before sending trajectory
-        self.publishschedule()
+        #self.publishschedule()
 
         ### From self.new_rect to PoseArray()
         self.RectangleSegmentation()
@@ -198,7 +198,8 @@ class traj_planner:
         
 
     def publishschedule(self):
-        self.callbackForceSchedule(self.force_schedule)
+        #self.callbackForceSchedule(self.force_schedule)
+        pass
 
         
     def EstimateXYresolution(self):
@@ -217,6 +218,8 @@ class traj_planner:
             rospy.logwarn("arbitrary 1.0 - 1.0 mm is used instead")
             self.camera_resolutionX = 1
             self.camera_resolutionY = 1
+
+        self.average_camera_resolution = (self.camera_resolutionX+self.camera_resolutionY)/2
         
     def callbackMARKER(self, data):
         self.marker = data
@@ -288,9 +291,10 @@ class traj_planner:
         
 
         self.D_sander_mm = 225 # (mm)
-        D_sander_px_x = self.D_sander_mm / self.camera_resolutionX
+        D_sander_px_x = self.D_sander_mm / self.camera_resolutionX ### (mm)/(mm/px)
         D_sander_px_y = self.D_sander_mm / self.camera_resolutionY
         self.Effective_width_px = (D_sander_px_x + D_sander_px_y)/2 * self.fraction_effective_whith 
+        self.Effective_width_mm = self.D_sander_mm * self.fraction_effective_whith
 
 
         ### Le premier point de la boite est le point le plus bas (+y), puis clockwise
@@ -433,15 +437,25 @@ class traj_planner:
         ##rospy.loginfo("angle:"+str(self.center_rect_.angle) + "\n x:" + str(self.center_rect_.center.x) + "\n y:" + str(self.center_rect_.center.y))
 
         ### Check the size of the rectangle to segmente in 3 or 2
-        if (self.rect.size.width > self.Effective_width_px * 3 ) and (self.rect.size.height > self.Effective_width_px * 3 ):
+        ### TODO : Change from pixel to mm
+        ## if (self.rect.size.width > self.Effective_width_px * 3 ) and (self.rect.size.height > self.Effective_width_px * 3 ):
+        if (self.rect.size.width * self.average_camera_resolution > self.Effective_width_mm * 3 ) and (self.rect.size.height*self.average_camera_resolution > self.Effective_width_mm * 3 ):
+
             ### The rectangle is too wide for 3 pass.
-            
             rospy.logwarn("Unexpectly large joint")
 
+            omni_rect_ = omni_rect()
+            omni_rect_.angle = self.rects[-1].angle +180
+            omni_rect_.lenght = max(self.left_rect_.size.height,self.left_rect_.size.width)
+            omni_rect_.x = self.center_rect_.center.x
+            omni_rect_.y = self.center_rect_.center.y
+            self.rects.append(omni_rect_)
             
-        elif (self.rect.size.width > self.Effective_width_px * 2 ) and (self.rect.size.height > self.Effective_width_px * 2 ):
+        ## elif (self.rect.size.width > self.Effective_width_px * 2 ) and (self.rect.size.height > self.Effective_width_px * 2 ):
+        elif (self.rect.size.width * self.average_camera_resolution > self.Effective_width_mm * 2 ) and (self.rect.size.height * self.average_camera_resolution > self.Effective_width_mm * 2 ):
+        
             ### The rectangle is big enough to subdivided in 3 part
-            rospy.loginfo("Use the center rectangle")
+            rospy.loginfo("Large joint. Use the center rectangle")
 
             omni_rect_ = omni_rect()
             omni_rect_.angle = self.rects[-1].angle +180
@@ -451,12 +465,16 @@ class traj_planner:
             self.rects.append(omni_rect_)
             
             
-        elif (self.rect.size.width > self.Effective_width_px * 1 ) and (self.rect.size.height > self.Effective_width_px * 1 ):
+        ## elif (self.rect.size.width > self.Effective_width_px * 1 ) and (self.rect.size.height > self.Effective_width_px * 1 ):
+        elif (self.rect.size.width * self.average_camera_resolution > self.Effective_width_mm * 1 ) and (self.rect.size.height * self.average_camera_resolution > self.Effective_width_mm * 1 ):
+
             ### The rectangle is small enough for 2 pass
             rospy.loginfo("The rectangle is small enough. Use 2 pass")
             
 
-        elif (self.rect.size.width < self.Effective_width_px) and (self.rect.size.height < self.Effective_width_px):
+        ##elif (self.rect.size.width < self.Effective_width_px) and (self.rect.size.height < self.Effective_width_px):
+        elif (self.rect.size.width *self.average_camera_resolution < self.Effective_width_mm) and (self.rect.size.height * self.average_camera_resolution < self.Effective_width_mm):
+
             ### The rectangle is too small for one pass
             rospy.logwarn("The rectangle is too small")
         else :
@@ -484,8 +502,8 @@ class traj_planner:
             point.y = rect.y + math.sin(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px)/2
             self.points.append(point)
             point = Point()
-            point.x = rect.x + math.cos(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px+20)/2
-            point.y = rect.y + math.sin(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px+20)/2
+            point.x = rect.x + math.cos(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px+200)/2
+            point.y = rect.y + math.sin(math.radians(rect.angle))*(rect.lenght-self.Effective_width_px+200)/2
             self.points.append(point)
             
         ### Let's do orientation by localy checking the point cloud
@@ -507,6 +525,22 @@ class traj_planner:
         side = np.int0(side)
         point.x = np.int0(point.x)
         point.y = np.int0(point.y)
+
+        ### Check if the point is out of bound
+        if (point.x >= self.img_dim_x):
+            rospy.logwarn("Point is out of x bound :" + str(point.x))
+            point.x = self.img_dim_x-1
+        elif(point.x < 0):
+            rospy.logwarn("Point is out of x bound :" + str(point.x))
+            point.x = 0
+
+        if (point.y >= self.img_dim_y):
+            rospy.logwarn("Point is out of x bound :" + str(point.y))
+            point.y = self.img_dim_y-1
+        elif(point.y < 0):
+            rospy.logwarn("Point is out of x bound :" + str(point.y))
+            point.y = 0
+
         ##rospy.loginfo("Point of interest")
         ##rospy.loginfo(point)
         ##rospy.loginfo(side)
@@ -515,12 +549,22 @@ class traj_planner:
 
         
         plane = pyrsc.Plane()
+        ### Keep minPoint as high as possible and threashold over 0.0035
+        ### if RANSAC take too much time, augment threshold and reduce max iteration
+        ### if bad orientation, reduce threshold and augment max iteration
         if np.size(sub_pc) == 0:
-            best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.003, minPoints=int(pc.shape[0]*pc.shape[1]*0.4), maxIteration=100)
+            rospy.loginfo("RANSAC done with all point")
+            best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.0037, minPoints=int(pc.shape[0]*pc.shape[1]*0.99), maxIteration=100)
         else:
-            best_eq, best_inliers, perc_success, it_success = plane.fit(sub_pc, 0.003, minPoints=int(sub_pc.shape[0]*sub_pc.shape[1]*0.4), maxIteration=100)  # Good compromise
+            rospy.loginfo("RANSAC done with points near pose")
+            best_eq, best_inliers, perc_success, it_success = plane.fit(sub_pc, 0.0035, minPoints=int(sub_pc.shape[0]*sub_pc.shape[1]*0.99), maxIteration=300)  # Good compromise
+        ##best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.004, minPoints=int(pc.shape[0]*pc.shape[1]*0.9), maxIteration=100)
         best_eq = np.array(best_eq)
+
+        rospy.loginfo("RANSAC done with " + str(it_success) + " iteration.")
+        rospy.loginfo("RANSAC done with " + str(perc_success) + " succes rate.") ### should be move than 95, up threashold and max iteration
         if best_eq.size == 0:  # no planes found
+          rospy.logwarn("WARNING: RANSAC found no plane")
           best_eq = np.array([1,1,1,1])  # https://pypi.org/project/pyransac3d/
         elif(best_eq[3] > 0):
           best_eq = -best_eq
@@ -530,7 +574,7 @@ class traj_planner:
         n_normalized = n / n_norm
         unitZ = np.array([0,0,1])
         distance = best_eq[3] / n_norm
-        center_point = -1 * distance * n_normalized  # Not centered with point cloud... TODO: better fix than middle pixel of the image
+        center_point = -1 * distance * n_normalized  # Not centered with point cloud... DONE: better fix than middle pixel of the image
 
         orientation = np.cross(unitZ, n_normalized)
         orientation = np.append(orientation, np.dot(unitZ, n_normalized) + np.sqrt(np.linalg.norm(unitZ)**2 + n_norm**2))
@@ -543,13 +587,13 @@ class traj_planner:
         
         self.pose.position.x    = pc[point.y,point.x,0] ### The orders of x and y need to be changed
         self.pose.position.y    = pc[point.y,point.x,1]
-        self.pose.position.z    = pc[point.y,point.x,2] -0.01 ### Retract 10mm from the wall in camera frame
+        self.pose.position.z    = pc[point.y,point.x,2] -0.015 ### Retract 10mm from the wall in camera frame
         self.pose.orientation.x = orientation_normalized[0]
         self.pose.orientation.y = orientation_normalized[1]
         self.pose.orientation.z = orientation_normalized[2]
         self.pose.orientation.w = orientation_normalized[3]
 
-        ### Override orientation with marker orientation for KDL
+        ### Override orientation with marker orientation(Orientation of the full RANSAC)
         ##self.pose.orientation = self.marker.pose.orientation
 
         
@@ -724,12 +768,13 @@ class traj_planner:
         ##rospy.logwarn(self.full_trajectory.joint_names)
         ### NOTE: FANUC transforme l'array de rad2deg
         ### Mettons le premiere joint prismatic en mm°/rad
-        trajectory_point.positions[0] = np.radians(trajectory_point.positions[0])
+        #trajectory_point.positions[0] = np.radians(trajectory_point.positions[0])
         self.full_trajectory.points.append(trajectory_point)
 
         ### update curent joint with last IK solution
         ##self.current_joint_pose.position = self.joint_pose.solution.joint_state.position
         self.last_joint_solution = JointState()
+        self.last_joint_solution = self.current_joint_pose
         self.last_joint_solution.position = self.joint_pose.solution.joint_state.position
 
         

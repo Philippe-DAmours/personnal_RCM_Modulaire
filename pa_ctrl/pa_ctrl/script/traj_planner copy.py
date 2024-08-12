@@ -30,12 +30,6 @@ from opencv_apps.msg import RotatedRectStamped, RotatedRect, Contour
 import math
 
 
-class omni_rect:
-    def __init__(self) -> None:
-        self.angle = float()
-        self.x = float()
-        self.y = float()
-        self.lenght = float()
         
 
 
@@ -46,9 +40,6 @@ class traj_planner:
         rospy.init_node("traj_planer_node")
         rospy.loginfo("traj planner initializing")
         
-        rospy.Subscriber("bounding_box", RotatedRect,self.callbackBOX,queue_size=10)
-        rospy.Subscriber("joint_state",JointState,self.currentJointCallback,queue_size=10) 
-        rospy.Subscriber("/console_traj_planner", Empty, self.consoleRunAlgoAndPub,queue_size=10)
         rospy.Subscriber("/camera/depth/image_rect_raw",Image, self.callbackPC)
 
         self.compute_ik_client = rospy.ServiceProxy("/compute_ik", GetPositionIK )
