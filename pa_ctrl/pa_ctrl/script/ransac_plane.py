@@ -73,6 +73,7 @@ class Plane:
             # We have to use a point to find k
             vecC = vecC / np.linalg.norm(vecC)
             k = -np.sum(np.multiply(vecC, pt_samples[1, :]))
+            
             plane_eq = [vecC[0], vecC[1], vecC[2], k]
 
             # Distance from a point to a plane

@@ -147,7 +147,9 @@ class image_converter:
     self.rotated_rect_pub = rospy.Publisher("bounding_box", RotatedRect , queue_size=10)
 
     # POINTCLOUD PIPELINE --------------------------------------------------------------------------------------------------------
-    self.pc_sub = rospy.Subscriber("/camera/depth/color/points", PointCloud2, self.callbackPC, queue_size=10)
+    ##self.pc_sub = rospy.Subscriber("/camera/depth/color/points", PointCloud2, self.callbackPC, queue_size=10) ### ORIGINAL DE SAM avec rs_camera.launch
+    self.pc_sub = rospy.Subscriber("/camera/depth_registered/points", PointCloud2, self.callbackPC, queue_size=10) ###oganised point cloud avec rgbd_launch.launch.xml
+
 
     self.pc_raw = np.zeros((self.img_dim_y,self.img_dim_x, 3), dtype=float)
 
@@ -292,6 +294,7 @@ class image_converter:
     single_point_array = np.array([[0,0]])
 
     size = 0
+    biggest_rect = None
     for i, c in enumerate(contours):
         #print("Rectangle #:", i, " = ", c)
         rect = cv2.minAreaRect(c)
@@ -324,14 +327,17 @@ class image_converter:
               size = dim1 * dim2
             
     ### Send the biggest box to trajectory pipeline --Philippe D'Amours
-    rotated_rect_ = RotatedRect()
-    rotated_rect_.angle = biggest_rect[2]
-    rotated_rect_.center.x = biggest_rect[0][0] 
-    rotated_rect_.center.y = biggest_rect[0][1] 
-    rotated_rect_.size.height = biggest_rect[1][1]
-    rotated_rect_.size.width  = biggest_rect[1][0]
+    if biggest_rect is None:
+      rospy.logwarn("No rectangle found in image")
+    else:
+      rotated_rect_ = RotatedRect()
+      rotated_rect_.angle = biggest_rect[2]
+      rotated_rect_.center.x = biggest_rect[0][0] 
+      rotated_rect_.center.y = biggest_rect[0][1] 
+      rotated_rect_.size.height = biggest_rect[1][1]
+      rotated_rect_.size.width  = biggest_rect[1][0]
     
-    self.rotated_rect_pub.publish(rotated_rect_)
+      self.rotated_rect_pub.publish(rotated_rect_)
 
 
     #Remove first all zeros value
