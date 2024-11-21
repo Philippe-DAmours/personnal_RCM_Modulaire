@@ -337,7 +337,7 @@ class image_converter:
       rotated_rect_.size.height = biggest_rect[1][1]
       rotated_rect_.size.width  = biggest_rect[1][0]
     
-      self.rotated_rect_pub.publish(rotated_rect_)
+      #self.rotated_rect_pub.publish(rotated_rect_)### Commented for test with manual interface
 
 
     #Remove first all zeros value

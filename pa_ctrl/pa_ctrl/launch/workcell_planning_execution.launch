@@ -45,10 +45,10 @@
     <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
   </group>
 
-  <!-- traj_planer pipeline from image to trajectory_msgs-->
-  <node name="traj_planner" pkg="pa_ctrl" type="traj_planner.py" respawn="false" output="screen">
+  <!-- TODOtraj_planer pipeline from image to trajectory_msgs-->
+  <!--node name="traj_planner" pkg="pa_ctrl" type="traj_planner.py" respawn="false" output="screen">
     <param name="robot_ip" value="$(arg robot_ip)"/>
-  </node>
+  </node-->
 
 
 

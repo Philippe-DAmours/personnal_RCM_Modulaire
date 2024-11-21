@@ -1,5 +1,7 @@
 #!/usr/bin/env python3
 
+### rosrun pa_ctrl move_preset.py
+
 import rospy
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 
@@ -60,7 +62,7 @@ class preset_move:
         self.appendAndPublish()
 
     def consoleMovePoseNormal(self,data):
-        self.traj_point.positions = [0.0, 0.0, 25.0, -65.0, 0.0, 0.0, 0.0]
+        self.traj_point.positions = [510.50, 0.0, 25.0, -65.0, 0.0, 0.0, 0.0]
         self.appendAndPublish()
 
     def consoleMovePoseTravel(self,data):
@@ -68,12 +70,12 @@ class preset_move:
         self.appendAndPublish()
 
     def consoleMovePoseCamera(self,data):
-        self.traj_point.positions = [0.0, 0.0, 38.0, -53.50, 0.0, -11.0, -40.70]
+        self.traj_point.positions = [510.50, 0.0, 38.0, -53.50, 0.0, -11.0, -40.70]
         self.appendAndPublish()
 
 
     def consoleMovePosePreset1(self,data):
-        self.traj_point.positions = [0.01, 11.0, 56.33, -104.7, -19.19, 7.19, -30.64]
+        self.traj_point.positions = [0.0, 0.0, 38.0, -53.50, 0.0, -11.0, -40.70]
         self.appendAndPublish()
 
     def consoleMovePosePreset2(self,data):

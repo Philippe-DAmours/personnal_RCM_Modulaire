@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
 import ransac_plane as pyrsc
+import logging
 
 import rospy
 import rosbag
@@ -18,7 +20,7 @@ from tf2_msgs.msg import TFMessage
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 import numpy as np
 
-from std_msgs.msg import Empty, Int16
+from std_msgs.msg import Empty, Int16, String
 
 from sensor_msgs.msg import Image, CameraInfo, PointCloud2, PointField, JointState
 from cv_bridge import CvBridge, CvBridgeError
@@ -32,8 +34,8 @@ from opencv_apps.msg import RotatedRectStamped, RotatedRect, Contour
 import math
 
 ### For force schedule selection
-HOST = "192.168.1.100" ###DONE: Make it a variable with robot_ip arg
-PORT = 11006
+#HOST = "192.168.1.100" ###DONE: Make it a variable with robot_ip ros param self.host
+PORT = 11006 ###TODO:This shouldn't be here
 
 class omni_rect:
     def __init__(self) -> None:
@@ -71,9 +73,10 @@ class traj_planner:
         ### Callback ----------------------------------------------------------------------------
         rospy.Subscriber("/bounding_box", RotatedRect,self.callbackBOX,queue_size=10)
         rospy.Subscriber("/joint_states",JointState,self.currentJointCallback,queue_size=10) 
-        rospy.Subscriber("/camera/depth/color/points",PointCloud2, self.callbackPC)
+        ##rospy.Subscriber("/camera/depth/color/points",PointCloud2, self.callbackPC) ### ORIGINAL DE SAM POUR rs_camera.launch
+        rospy.Subscriber("/camera/depth_registered/points",PointCloud2,self.callbackPC) ### Pour rgbd_launch
         rospy.Subscriber("/point_cloud_plane",Marker,self.callbackMARKER)
-        rospy.Subscriber("/force_schedule",Int16,self.callbackForceSchedule)
+        rospy.Subscriber("/force_schedule",Int16,self.callbackForceSchedule) ### For sending integer to robot for force schedule selection
 
         ### Callback for the console command made by the operator ------------------------------
         rospy.Subscriber("/console_traj_planner", Empty, self.consoleRunAlgoAndPub,queue_size=10)
@@ -87,9 +90,11 @@ class traj_planner:
         self.traj_pub = rospy.Publisher("/joint_path_command",JointTrajectory, queue_size=1)
         self.pose_marker_pub = rospy.Publisher("/pose_marker_array",MarkerArray,queue_size=10)
         self.corrected_plane_marker_pub = rospy.Publisher("/corrected_plane_marker",Marker,queue_size=1)
+        self.ransac_debug_pub = rospy.Publisher("/ransac_debug",String,queue_size=1)
         
         #### Class Variable --------------------------------------------------------------------
         self.rect               = RotatedRect()
+        self.new_rect           = RotatedRect()
         self.pose_array_        = PoseArray()
         self.point_             = Point()
         self.right_rect_        = RotatedRect()
@@ -169,6 +174,8 @@ class traj_planner:
     def currentJointCallback(self,data):
         rospy.loginfo_once("Traj Planer : JointCallback was here")
         self.current_joint_pose = data
+        rospy.loginfo_once(self.current_joint_pose)
+
 
     def callbackForceSchedule(self,data):
         rate = rospy.Rate(100)
@@ -186,11 +193,20 @@ class traj_planner:
     def consoleRunAlgoAndPub(self,data):
         ### First send force schedule to make it's at the correct one before sending trajectory
         #self.publishschedule()
+        if not self.new_rect.size.width or not self.new_rect.size.height:
+            rospy.logwarn("No rect has been recorded yet")
+            return
 
         ### From self.new_rect to PoseArray()
         self.RectangleSegmentation()
 
+        ### TODO : if rectangle missing, return
+        if not self.pose_array_.poses:
+            rospy.logwarn("Empty Poses. Cancel IKSrvCall")
+            return
+
         ### From PoseArray to self.full_trajectory
+        ### TODO: Add condition if point cloud is empty
         self.PoseArrayToIKSrvCall()
 
         ### Publish self.fulltraject
@@ -198,8 +214,40 @@ class traj_planner:
         
 
     def publishschedule(self):
+        ###TODO: Send schedule int bypassing console callback
         #self.callbackForceSchedule(self.force_schedule)
         pass
+
+    def fit_plane(self,point_cloud): ##
+        ### Exemple from 
+        ### https://programming-surgeon.com/en/fit-plane-python/
+        """
+        input
+            point_cloud : list of xyz values numpy.array
+        output
+            plane_v : (normal vector of the best fit plane)
+            com : center of mass
+        """
+        point_cloud = point_cloud.reshape(-1, point_cloud.shape[-1])
+
+        cleaned_points = point_cloud[np.all(np.isfinite(point_cloud), axis=1)]
+
+        com = np.sum(cleaned_points, axis=0,dtype=np.float64) / len(cleaned_points)
+        # calculate the center of mass
+        q = cleaned_points - com
+        # move the com to the origin and translate all the points (use numpy broadcasting)
+        Q = np.dot(q.T, q)
+        # calculate 3x3 matrix. The inner product returns total sum of 3x3 matrix
+        la, vectors = np.linalg.eig(Q)
+        # Calculate eigenvalues and eigenvectors
+        plane_v = vectors.T[np.argmin(la)]
+        # Extract the eigenvector of the minimum 
+
+        #if plane_v[2] <= 0 :
+        #   print("\033[93mWARNING:Normal is negative\033[0m")
+        #    plane_v = np.negative(plane_v)
+
+        return plane_v, com
 
         
     def EstimateXYresolution(self):
@@ -305,6 +353,8 @@ class traj_planner:
         ### We can asume mostly all rectangle are -90 or 0
         ### check if joint is vertical with width and heigh
 
+
+        ### TODO: La if suivant pourrait être fait un seul case 
         if (self.rect.angle>-5 and self.rect.size.width<=self.rect.size.height):
             ### joint vertical
             rospy.loginfo("Verticle joint")
@@ -411,7 +461,8 @@ class traj_planner:
 
         else:
             ### Erreur : Joint en diagonal
-            rospy.logwarn("Erreur: Unexpected joint orrientation")
+            rospy.logwarn("Erreur: Unexpected rect orrientation")
+            return
 
         self.rects = []
 
@@ -535,10 +586,10 @@ class traj_planner:
             point.x = 0
 
         if (point.y >= self.img_dim_y):
-            rospy.logwarn("Point is out of x bound :" + str(point.y))
+            rospy.logwarn("Point is out of y bound :" + str(point.y))
             point.y = self.img_dim_y-1
         elif(point.y < 0):
-            rospy.logwarn("Point is out of x bound :" + str(point.y))
+            rospy.logwarn("Point is out of y bound :" + str(point.y))
             point.y = 0
 
         ##rospy.loginfo("Point of interest")
@@ -547,28 +598,64 @@ class traj_planner:
         ##sub_pc = np.zeros((2*side,2*side,3),dtype=float)
         sub_pc = pc[point.y - side:point.y + side,point.x -side:point.x + side,:]
 
-        
+        ### Orientation par RANSAC -----------------------------------------------------
         plane = pyrsc.Plane()
         ### Keep minPoint as high as possible and threashold over 0.0035
         ### if RANSAC take too much time, augment threshold and reduce max iteration
         ### if bad orientation, reduce threshold and augment max iteration
+
         if np.size(sub_pc) == 0:
             rospy.loginfo("RANSAC done with all point")
-            best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.0037, minPoints=int(pc.shape[0]*pc.shape[1]*0.99), maxIteration=100)
-        else:
+            best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.0037, minPoints=int(pc.shape[0]*pc.shape[1]*0.99), maxIteration=100)#100
+            ref_normal = self.fit_plane(pc)
+        elif np.size(sub_pc)!=0:
             rospy.loginfo("RANSAC done with points near pose")
-            best_eq, best_inliers, perc_success, it_success = plane.fit(sub_pc, 0.0035, minPoints=int(sub_pc.shape[0]*sub_pc.shape[1]*0.99), maxIteration=300)  # Good compromise
+            best_eq, best_inliers, perc_success, it_success = plane.fit(sub_pc, 0.0035, minPoints=int(sub_pc.shape[0]*sub_pc.shape[1]*0.99), maxIteration=300)#300  # Good compromise
+            ref_normal = self.fit_plane(pc)
+        else:
+            ### Unexpected outcom
+            rospy.logwarn("Unexpected condition")
+            return
         ##best_eq, best_inliers, perc_success, it_success = plane.fit(pc, 0.004, minPoints=int(pc.shape[0]*pc.shape[1]*0.9), maxIteration=100)
         best_eq = np.array(best_eq)
 
         rospy.loginfo("RANSAC done with " + str(it_success) + " iteration.")
         rospy.loginfo("RANSAC done with " + str(perc_success) + " succes rate.") ### should be move than 95, up threashold and max iteration
+        
         if best_eq.size == 0:  # no planes found
           rospy.logwarn("WARNING: RANSAC found no plane")
           best_eq = np.array([1,1,1,1])  # https://pypi.org/project/pyransac3d/
         elif(best_eq[3] > 0):
           best_eq = -best_eq
+        ### -----------------------------------------------------------------
 
+        ### Alternative code faster than RANSAC ------------------------------
+        ### Orientation by principle axis component (PCA)
+        ### Warning : PCA doesn't ingnore aberent data
+        ### Exemple from https://programming-surgeon.com/en/fit-plane-python/
+        pts_listALL = pc.reshape(-1, pc.shape[-1]) 
+        cleaned_points = pts_listALL[np.all(np.isfinite(pts_listALL), axis=1)]
+        com = np.sum(cleaned_points, axis=0) / cleaned_points.shape[0]
+        # calculate the center of mass
+        q = cleaned_points - com
+        # move the com to the origin and translate all the points (use numpy broadcasting)
+        Q = np.dot(q.T, q)
+        # calculate 3x3 matrix. The inner product returns total sum of 3x3 matrix
+        la, vectors = np.linalg.eig(Q)
+        # Calculate eigenvalues and eigenvectors
+        plane_v = vectors.T[np.argmin(la)]
+        # Extract the eigenvector of the minimum 
+        ### ------------------------------------------------------------------
+
+        ### send to topic for debug -----------------------------------------
+        #self.ransac_debug_pub.publish("fit_plane reference : {ref_normal}")
+        #self.ransac_debug_pub.publish("ransac plane fit    : {best_eq}")
+        #self.ransac_debug_pub.publish("RANSAC done with " + str(it_success) + " iteration.")
+        #self.ransac_debug_pub.publish("RANSAC done with " + str(perc_success) + " succes rate.")
+        self.ransac_debug_pub.publish("fit_plane reference : "+str(ref_normal) + "\nransac plane fit    : "+str(best_eq)+"\nRANSAC done with " + str(it_success) + " iteration\n"+"RANSAC done with " + str(perc_success) + " succes rate.")
+        ### -----------------------------------------------------------------
+
+        ### Plane equation to orientaiton -----------------------------------
         n = best_eq[:3]
         n_norm = np.linalg.norm(n)
         n_normalized = n / n_norm
@@ -579,6 +666,9 @@ class traj_planner:
         orientation = np.cross(unitZ, n_normalized)
         orientation = np.append(orientation, np.dot(unitZ, n_normalized) + np.sqrt(np.linalg.norm(unitZ)**2 + n_norm**2))
         orientation_normalized = orientation / np.linalg.norm(orientation)
+        ### ------------------------------------------------------------------
+
+        
 
 
         ##self.EstimateXYresolution() ### Already done in rectangle segmentation
@@ -587,7 +677,7 @@ class traj_planner:
         
         self.pose.position.x    = pc[point.y,point.x,0] ### The orders of x and y need to be changed
         self.pose.position.y    = pc[point.y,point.x,1]
-        self.pose.position.z    = pc[point.y,point.x,2] -0.015 ### Retract 10mm from the wall in camera frame
+        self.pose.position.z    = pc[point.y,point.x,2] -0.010 ### Retract 10mm from the wall in camera frame
         self.pose.orientation.x = orientation_normalized[0]
         self.pose.orientation.y = orientation_normalized[1]
         self.pose.orientation.z = orientation_normalized[2]
@@ -674,7 +764,7 @@ class traj_planner:
         ##rospy.loginfo("Trying IK for pose")
         ##rospy.loginfo(req.pose_stamped)
 
-        ### Override orrientation
+        ### Override orrientation for debuging
         ##req.pose_stamped.pose.orientation.x = 0.70700
         ##req.pose_stamped.pose.orientation.y = -0.023
         ##req.pose_stamped.pose.orientation.z = 0.70711
@@ -688,9 +778,10 @@ class traj_planner:
         ### Ajoutons une joint constraint pour que l'axe du husky soit à zéro puisque la démo se fais sans cette axe.
         joint_constraint = JointConstraint()
         joint_constraint.joint_name = "husky_to_robot_base_plate"
-        joint_constraint.position = 0.01
-        joint_constraint.tolerance_below = 0.0
-        joint_constraint.tolerance_above = 0.01
+        ##joint_constraint.position = 0.01
+        joint_constraint.position = self.current_joint_pose.position[6]
+        joint_constraint.tolerance_below = 0.005
+        joint_constraint.tolerance_above = 0.005
         joint_constraint.weight   = 100
         req.constraints.joint_constraints.append(joint_constraint)
         
@@ -743,6 +834,7 @@ class traj_planner:
         res = self.compute_ik_client(req)
         ##rospy.loginfo(res.error_code.val)
 
+        
         while not res.error_code.val == 1:
             rospy.loginfo(res.error_code)
             rospy.logwarn("Did not find solution for IK. Looping back")
@@ -752,23 +844,49 @@ class traj_planner:
             
         green_start = '\033[92m'
         color_reset = '\033[0m'
-        rospy.loginfo(green_start + "Found IK solution" + color_reset)
+        rospy.loginfo(green_start + "Found IK solution in " + color_reset)
 
         ### Reponse du service call
         self.joint_pose = res
+    
         
         ### Put joint_pose in a trajectory msg
         trajectory_point = JointTrajectoryPoint()
         trajectory_point.time_from_start = rospy.Duration(0.3)
-        trajectory_point.positions = res.solution.joint_state.position
+        #trajectory_point.positions = res.solution.joint_state.position
+    
+        ### Tuple object does not support assigment --------------------------------------
+        my_list = (res.solution.joint_state.position)
+        #my_list = (my_list[0]*1000.0,)+ my_list[1:]
+        #my_list[0] = 1.0        
+        trajectory_point.positions = list(my_list)
+
+        # my_joint = res.solution.joint_state.position[0]
+        # my_joint = my_joint * 1000
+        # rospy.loginfo("my_joint " + str(my_joint))
+        rospy.loginfo("res " + str(res.solution.joint_state.position[0]))
+        rospy.loginfo("point "+ str(trajectory_point))
+        # trajectory_point.positions[0] = my_joint
+
+        rospy.loginfo_once(trajectory_point.positions)
+        
+        #my_list = trajectory_point.positions
+        #my_list = list(my_list)
+        #my_list[0] = my_joint
+        #trajectory_point.positions = tuple(my_list)
+        #rospy.loginfo_once(trajectory_point.positions)
+
         self.full_trajectory.header = res.solution.joint_state.header
         ### WARNING: Make sure joint name are in the correct order depending if the state are from
         self.full_trajectory.joint_names = self.joint_pose.solution.joint_state.name
         ##self.full_trajectory.joint_names = self.current_joint_pose.name
         ##rospy.logwarn(self.full_trajectory.joint_names)
+
         ### NOTE: FANUC transforme l'array de rad2deg
         ### Mettons le premiere joint prismatic en mm°/rad
-        #trajectory_point.positions[0] = np.radians(trajectory_point.positions[0])
+        trajectory_point.positions[0] = 1000.0*trajectory_point.positions[0]
+        trajectory_point.positions[0] = np.radians(trajectory_point.positions[0])
+
         self.full_trajectory.points.append(trajectory_point)
 
         ### update curent joint with last IK solution

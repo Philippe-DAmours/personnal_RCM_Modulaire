@@ -2,6 +2,9 @@
 # Which is under Apache 2.0 license
 
 import random
+import rospy
+from datetime import datetime
+import logging
 
 import numpy as np
 
@@ -22,6 +25,62 @@ class Plane:
     def __init__(self):
         self.inliers = []
         self.equation = []
+
+    def fit_plane(self,point_cloud):
+        ### Exemple from 
+        ### https://programming-surgeon.com/en/fit-plane-python/
+        """
+        input
+            point_cloud : list of xyz values numpy.array
+        output
+            plane_v : (normal vector of the best fit plane)
+            com : center of mass
+        """
+        cleaned_points = point_cloud[np.all(np.isfinite(point_cloud), axis=1)]
+
+        com = np.sum(cleaned_points, axis=0,dtype=np.float64) / len(cleaned_points)
+        # calculate the center of mass
+        q = cleaned_points - com
+        # move the com to the origin and translate all the points (use numpy broadcasting)
+        Q = np.dot(q.T, q)
+        # calculate 3x3 matrix. The inner product returns total sum of 3x3 matrix
+        la, vectors = np.linalg.eig(Q)
+        # Calculate eigenvalues and eigenvectors
+        plane_v = vectors.T[np.argmin(la)]
+        # Extract the eigenvector of the minimum 
+
+        #if plane_v[2] <= 0 :
+        #   print("\033[93mWARNING:Normal is negative\033[0m")
+        #    plane_v = np.negative(plane_v)
+
+        return plane_v, com
+    
+    def custom_log(self,plane_v,perc_success,it):
+        
+        # Set up the logger
+        logging.basicConfig(filename='/home/damp2404/catkin_ws/src/rcm_modulaire/pa_ctrl/pa_ctrl/script/ransac.log', level=logging.INFO, format='%(asctime)s %(levelname)s: %(message)s', datefmt='%Y-%m-%d %H:%M:%S')
+        # Log a message with the current date and time
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        logging.info(f'Loged at {current_time}')
+
+        logging.info(f'The reference  normal is: {plane_v}')
+        logging.info(f'The bestRANSAC normal is: {self.equation}')
+        logging.info(f'with percent succes {perc_success} and with {it} iterations')
+
+
+    def ARCHIVEcustom_log(self,plane_v,perc_success,it):
+
+        file = open("ransac.txt","w")
+        current_time = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        file.write(f'Loged at {current_time}')
+
+        file.write(f'The reference  normal is: {plane_v}')
+        file.write(f'The bestRANSAC normal is: {self.equation}')
+        file.write(f'with percent succes {perc_success} and with {it} iterations')
+
+        file.close()
+        
+
 
     def fit(self, pts_matrix, thresh=0.05, minPoints=100, maxIteration=1000):
         """
@@ -46,6 +105,10 @@ class Plane:
         n_points = pts_listALL.shape[0]
         best_eq = []
         best_inliers = []
+
+        if n_points == 0 :
+            print("0 points given to RANSAC")
+            return
 
         for it in range(maxIteration):
 
@@ -98,5 +161,9 @@ class Plane:
         # Print even if minPoints not reached
         perc_success = (len(best_inliers)/n_points)*100
         #print("RANSAC algo: ", perc_success, "% of the points in", it, " iterations")
+
+        ref_normal = self.fit_plane(pts_listALL)
+
+        self.custom_log(ref_normal,perc_success,it)
 
         return self.equation, self.inliers, perc_success, it
