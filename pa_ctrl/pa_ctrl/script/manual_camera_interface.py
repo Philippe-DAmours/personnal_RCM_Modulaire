@@ -53,8 +53,9 @@ class ImageInterface:
         self.click_point = None
         self.drag_point = None
         #self.pc_raw = np.zeros((self.img_dim_y,self.img_dim_x, 3), dtype=float)
+        rospy.loginfo("Manual camera interface node initialised")
 
-        ### --------------------------------------
+        
         ### --------------------------------------
         self.box_pub = rospy.Publisher('/bounding_box',RotatedRect,queue_size=10)
         self.start_x = 0
@@ -62,10 +63,20 @@ class ImageInterface:
         self.end_x = 0
         self.end_y = 0
         ### --------------------------------------
+        ### --------------------------------------
+        self.last_message_time = None
+        warning_interval = rospy.Duration(5)  # 5 seconds
+        rate = rospy.Rate(10)  # 10 Hz
+        while not rospy.is_shutdown():
+            if self.last_message_time is not None and (rospy.get_rostime() - self.last_message_time) > warning_interval:
+                rospy.logwarn("No new image on camera topic for %d seconds", warning_interval.secs)
+                self.last_message_time = rospy.get_rostime()
+            rate.sleep()
 
 
     def CallbackImage(self, data):
         ### from claude 3
+        self.last_message_time = rospy.get_rostime()
         try:
             cv_image = self.bridge.imgmsg_to_cv2(data, "bgr8")
             if self.click_point is not None and self.drag_point is not None:

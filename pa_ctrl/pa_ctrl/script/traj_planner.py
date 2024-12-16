@@ -191,26 +191,40 @@ class traj_planner:
             print("Connection to", self.host, "on port", PORT, "refused.")
         
     def consoleRunAlgoAndPub(self,data):
-        ### First send force schedule to make it's at the correct one before sending trajectory
+        ### Publish force schedule integer ------------------------------------------------------
         #self.publishschedule()
+        ### -------------------------------------------------------------------------------------
+
+        ### Compute the array PoseArray() from rectangle and Point cloud ------------------------
+        ### Check rectangle
         if not self.new_rect.size.width or not self.new_rect.size.height:
             rospy.logwarn("No rect has been recorded yet")
             return
+        ### Check point cloud
+        if np.all(self.pc_raw == 0):
+            rospy.logwarn("Empty point cloud. Cancel")
+            return
+        else:
+            self.RectangleSegmentation()
+        ### -------------------------------------------------------------------------------------
 
-        ### From self.new_rect to PoseArray()
-        self.RectangleSegmentation()
+        ### Marker for Rviz visualisation
+        self.PoseArrayToArrowMarker()
 
-        ### TODO : if rectangle missing, return
+
+        ### Call IK to transform cartesian positions in camera frame to joint command -----------
+        ### Check if Position array is filled
         if not self.pose_array_.poses:
             rospy.logwarn("Empty Poses. Cancel IKSrvCall")
             return
 
         ### From PoseArray to self.full_trajectory
-        ### TODO: Add condition if point cloud is empty
         self.PoseArrayToIKSrvCall()
+        ### -------------------------------------------------------------------------------------
 
-        ### Publish self.fulltraject
+        ### Publish self.fulltraject to ROS industrial node -------------------------------------
         self.PublishTraj()
+        ### -------------------------------------------------------------------------------------
         
 
     def publishschedule(self):
@@ -218,9 +232,10 @@ class traj_planner:
         #self.callbackForceSchedule(self.force_schedule)
         pass
 
-    def fit_plane(self,point_cloud): ##
+    def fit_plane(self,point_cloud): ### Only an exemple, copy-pastedd to ransac
         ### Exemple from 
-        ### https://programming-surgeon.com/en/fit-plane-python/
+        ### https://programming-surgeon.com/en/fit-plane-python
+        ### Also known as principle components analysis(PCA)
         """
         input
             point_cloud : list of xyz values numpy.array
@@ -315,7 +330,7 @@ class traj_planner:
     def RectangleSegmentation(self):
         
         ### Freeze rectangle
-        #self.rect = RotatedRect() #### Uncomment for dev auto complete
+        #self.rect = RotatedRect() ### DEV: Uncomment for auto complete
         self.rect = self.new_rect ### Comment for dev auto complete
 
         
@@ -326,7 +341,7 @@ class traj_planner:
         self.EstimateXYresolution()
 
         ### The diameter of the tool
-        ### The diameter is elipsed if the wall is not perpendicular
+        ### The diameter is elipsed if the wall is not perpendicular enough
         
 
         if not(abs(self.camera_resolutionX - self.camera_resolutionY) <= 2) :
@@ -334,6 +349,7 @@ class traj_planner:
             rospy.logwarn("The wall is not perpendicular enough")
             rospy.logwarn(self.camera_resolutionX)
             rospy.logwarn(self.camera_resolutionY)
+            return
             
             
         
@@ -354,7 +370,7 @@ class traj_planner:
         ### check if joint is vertical with width and heigh
 
 
-        ### TODO: La if suivant pourrait être fait un seul case 
+        ### TODO: La condition if suivant pourrait être fait un seul case 
         if (self.rect.angle>-5 and self.rect.size.width<=self.rect.size.height):
             ### joint vertical
             rospy.loginfo("Verticle joint")
@@ -488,12 +504,14 @@ class traj_planner:
         ##rospy.loginfo("angle:"+str(self.center_rect_.angle) + "\n x:" + str(self.center_rect_.center.x) + "\n y:" + str(self.center_rect_.center.y))
 
         ### Check the size of the rectangle to segmente in 3 or 2
-        ### TODO : Change from pixel to mm
+        ### TODO: Add case for 1 and 4 pass for better blend in
+        ### TODO: Change from pixel to mm
         ## if (self.rect.size.width > self.Effective_width_px * 3 ) and (self.rect.size.height > self.Effective_width_px * 3 ):
         if (self.rect.size.width * self.average_camera_resolution > self.Effective_width_mm * 3 ) and (self.rect.size.height*self.average_camera_resolution > self.Effective_width_mm * 3 ):
 
             ### The rectangle is too wide for 3 pass.
             rospy.logwarn("Unexpectly large joint")
+            rospy.logwarn("Too large joint. Use center pass for the moment")
 
             omni_rect_ = omni_rect()
             omni_rect_.angle = self.rects[-1].angle +180
@@ -506,7 +524,7 @@ class traj_planner:
         elif (self.rect.size.width * self.average_camera_resolution > self.Effective_width_mm * 2 ) and (self.rect.size.height * self.average_camera_resolution > self.Effective_width_mm * 2 ):
         
             ### The rectangle is big enough to subdivided in 3 part
-            rospy.loginfo("Large joint. Use the center rectangle")
+            rospy.loginfo("Large joint. Use the center pass")
 
             omni_rect_ = omni_rect()
             omni_rect_.angle = self.rects[-1].angle +180
@@ -630,21 +648,21 @@ class traj_planner:
         ### -----------------------------------------------------------------
 
         ### Alternative code faster than RANSAC ------------------------------
-        ### Orientation by principle axis component (PCA)
+        ### Orientation by principle component analysis (PCA)
         ### Warning : PCA doesn't ingnore aberent data
         ### Exemple from https://programming-surgeon.com/en/fit-plane-python/
-        pts_listALL = pc.reshape(-1, pc.shape[-1]) 
-        cleaned_points = pts_listALL[np.all(np.isfinite(pts_listALL), axis=1)]
-        com = np.sum(cleaned_points, axis=0) / cleaned_points.shape[0]
-        # calculate the center of mass
-        q = cleaned_points - com
-        # move the com to the origin and translate all the points (use numpy broadcasting)
-        Q = np.dot(q.T, q)
-        # calculate 3x3 matrix. The inner product returns total sum of 3x3 matrix
-        la, vectors = np.linalg.eig(Q)
-        # Calculate eigenvalues and eigenvectors
-        plane_v = vectors.T[np.argmin(la)]
-        # Extract the eigenvector of the minimum 
+        # pts_listALL = pc.reshape(-1, pc.shape[-1]) 
+        # cleaned_points = pts_listALL[np.all(np.isfinite(pts_listALL), axis=1)]
+        # com = np.sum(cleaned_points, axis=0) / cleaned_points.shape[0]
+        # # calculate the center of mass
+        # q = cleaned_points - com
+        # # move the com to the origin and translate all the points (use numpy broadcasting)
+        # Q = np.dot(q.T, q)
+        # # calculate 3x3 matrix. The inner product returns total sum of 3x3 matrix
+        # la, vectors = np.linalg.eig(Q)
+        # # Calculate eigenvalues and eigenvectors
+        # plane_v = vectors.T[np.argmin(la)]
+        # # Extract the eigenvector of the minimum 
         ### ------------------------------------------------------------------
 
         ### send to topic for debug -----------------------------------------
@@ -677,7 +695,7 @@ class traj_planner:
         
         self.pose.position.x    = pc[point.y,point.x,0] ### The orders of x and y need to be changed
         self.pose.position.y    = pc[point.y,point.x,1]
-        self.pose.position.z    = pc[point.y,point.x,2] -0.010 ### Retract 10mm from the wall in camera frame
+        self.pose.position.z    = pc[point.y,point.x,2] -0.025 ### Retract 10mm from the wall in camera frame
         self.pose.orientation.x = orientation_normalized[0]
         self.pose.orientation.y = orientation_normalized[1]
         self.pose.orientation.z = orientation_normalized[2]
@@ -703,6 +721,7 @@ class traj_planner:
             marker.pose = pose
             marker.header.frame_id = "camera_R435i_link"
             marker.type = 3 ### Cylinder
+            ##marker.type = marker.TEXT_VIEW_FACING
             
             marker.scale.x = self.D_sander_mm/1000*0.85
             marker.scale.y = self.D_sander_mm/1000*0.85
@@ -712,10 +731,45 @@ class traj_planner:
             marker.color.b = 0.0 + 0.1*idx
             marker.color.a = 1.0 
             marker.frame_locked = False
+            ##marker.text = str(idx)
             marker_array.markers.append(marker)
         
         self.pose_marker_pub.publish(marker_array)
             
+    def PoseArrayToArrowMarker(self):
+
+        if not self.pose_array_.poses:
+            rospy.logwarn("PoseArray empty. Do rectangle segmentation first")
+            return
+        
+        marker_array = MarkerArray()
+        
+        
+        for idx in range(len(self.pose_array_.poses)-1):
+            marker = Marker()
+            marker.id = idx
+            # marker.pose = pose
+            start_pose = self.pose_array_.poses[idx]
+            end_pose = self.pose_array_.poses[idx+1]
+            marker.points = [start_pose.position,end_pose.position]
+            marker.header.frame_id = "camera_R435i_link"
+            marker.type = 0 ### Arrow
+            ##marker.type = marker.TEXT_VIEW_FACING
+            
+            #marker.scale.x = self.D_sander_mm/1000*0.85
+            #marker.scale.y = self.D_sander_mm/1000*0.85
+            #marker.scale.z = 0.01
+            marker.scale.x = 0.02
+            marker.scale.y = 0.04
+            marker.color.r = 1.0 - 0.1*idx
+            marker.color.g = 0.0
+            marker.color.b = 0.0 + 0.1*idx
+            marker.color.a = 1.0 
+            marker.frame_locked = False
+            ##marker.text = str(idx)
+            marker_array.markers.append(marker)
+        
+        self.pose_marker_pub.publish(marker_array)
 
     def consolePoseArrayToMarker(self,data):
         ### Callback for the user to test PoseArraytoMarker
@@ -778,8 +832,10 @@ class traj_planner:
         ### Ajoutons une joint constraint pour que l'axe du husky soit à zéro puisque la démo se fais sans cette axe.
         joint_constraint = JointConstraint()
         joint_constraint.joint_name = "husky_to_robot_base_plate"
-        ##joint_constraint.position = 0.01
-        joint_constraint.position = self.current_joint_pose.position[6]
+        ##joint_constraint.position = 0.01 ### Note : Donner au IK solver en metre
+        joint_constraint.position = 0.550 ### Note : Donner au IK solver en metre
+        ## TODO: Joint_constraint give unstable result, verifie where current joint get changed
+        ##joint_constraint.position = self.current_joint_pose.position[6]
         joint_constraint.tolerance_below = 0.005
         joint_constraint.tolerance_above = 0.005
         joint_constraint.weight   = 100
@@ -840,6 +896,7 @@ class traj_planner:
             rospy.logwarn("Did not find solution for IK. Looping back")
             rospy.logwarn("The position request was :")
             rospy.loginfo(req.pose_stamped)
+            rospy.loginfo("Constrain :\n"+str(self.current_joint_pose.position[6]))
             res = self.compute_ik_client(req)
             
         green_start = '\033[92m'
@@ -864,8 +921,7 @@ class traj_planner:
         # my_joint = res.solution.joint_state.position[0]
         # my_joint = my_joint * 1000
         # rospy.loginfo("my_joint " + str(my_joint))
-        rospy.loginfo("res " + str(res.solution.joint_state.position[0]))
-        rospy.loginfo("point "+ str(trajectory_point))
+        rospy.loginfo("IK 7e axe " + str(res.solution.joint_state.position[0]))
         # trajectory_point.positions[0] = my_joint
 
         rospy.loginfo_once(trajectory_point.positions)
