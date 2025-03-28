@@ -5,15 +5,15 @@ rcm_poncage is a robotics project created by master degree engineering students 
 
 ## Architecture
 For now, the project is divided in 4 main packages/folders:
-1. pa_ctrl: ROS package that stand for Ponçage Automatisé control (Up comming)
-2. pa_rgb: ROS package that stand for Ponçage Automatisé par caméra RGB
-3. pa_tof: ROS package that stand for Ponçage Automatisé par caméra Time Of Flight (In progress)
-4. pa_uv: ROS package that stand for Ponçage Automatisé par fluorescence UV capté par caméra RGB (In progress)
+1. pa_ctrl: ROS package that stand for Trajectory planification and control
+2. pa_rgb: ROS package that stand for Ponçage Automatisé par caméra RGB (Obsolet)
+3. pa_tof: ROS package that stand for Ponçage Automatisé par caméra Time Of Flight (Obsolet)
+4. pa_uv: ROS package that stand for Ponçage Automatisé par fluorescence UV capté par caméra RGB 
 
 And 2 side packages to enable the main ones:
 
 5. camera_control_msgs: ROS package used to to adapt [Helios Lucid 2 ROS driver](https://support.thinklucid.com/using-ros-for-linux/?gclid=EAIaIQobChMIvf7E3MHB9wIVsnRvBB3k_gAmEAAYASAAEgKesvD_BwE)
-6. ur_adapted_launch: ROS package used to customize the UR5e's [URDF](https://gramaziokohler.github.io/compas_fab/0.21.0/examples/03_backends_ros/07_ros_create_urdf_ur5_with_measurement_tool.html)
+6. ~~ur_adapted_launch: ROS package used to customize the UR5e's [URDF](https://gramaziokohler.github.io/compas_fab/0.21.0/examples/03_backends_ros/07_ros_create_urdf_ur5_with_measurement_tool.html)~~
 
 ## Installation
 
@@ -46,7 +46,7 @@ The list of ROS libraries used in the project is as follows:
 - [moveit](https://moveit.ros.org/documentation/concepts/) (To plan and execute movements)
 - [jsk_rviz_plugins](https://jsk-visualization.readthedocs.io/en/latest/jsk_rviz_plugins/index.html) (To display more informations in rviz)
 - [Git](https://github.com/git-guides/install-git) and [Git lfs](https://git-lfs.com/) (To download large files)
-- open3d
+  
 
 1. ~~Switch for a [real time kernel](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/real_time.md) since the ur_robot_driver requires it.~~ Changed UR to FANUC
 
