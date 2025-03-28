@@ -12,3 +12,6 @@ Python script used by traj_planner for finding the plane during trajectory plani
 
 ### traj_planner.py
 Main python script used for trajectory planification. Make sure the uv_camera_node or manual_camera_interface is used. Use *workcell_planning_execution.launch* to launch this script. 
+
+### uv_image_analysis.py
+This script is copy of pa_uv script. Use uv_camera_node.launch instead.
