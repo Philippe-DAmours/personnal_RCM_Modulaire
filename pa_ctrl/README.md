@@ -16,6 +16,9 @@ This directory can be ignored.
 Used for the toturial for ros industrial [https://industrial-training-master.readthedocs.io/en/melodic/index.html](https://industrial-training-master.readthedocs.io/en/melodic/index.html)
 This directory can be ignored.
 
+## pa_ctrl
+Main directory for script and launch files for the traj_planner
+
 ## workcell_controller
 Used for the toturial for ros industrial [https://industrial-training-master.readthedocs.io/en/melodic/index.html](https://industrial-training-master.readthedocs.io/en/melodic/index.html)
 This directory can be ignored.
