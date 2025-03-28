@@ -42,20 +42,22 @@ The list of ROS libraries used in the project is as follows:
 - [vision_opencv](http://wiki.ros.org/vision_opencv) (To enable the perception algorithmes)
 - [Robot_localization](http://wiki.ros.org/robot_localization) (To fuse sensors)
 - [imu_filter_madgwick](http://wiki.ros.org/imu_filter_madgwick) (If the imu on the D435i camera is used to update it's tf)
-- [ur_robot_driver](http://wiki.ros.org/ur_robot_driver) (To inteface with the UR5e robot) -> Has to be install seperatly
+- ~~[ur_robot_driver](http://wiki.ros.org/ur_robot_driver) (To inteface with the UR5e robot) -> Has to be install seperatly~~ Changed UR robot to FANUC
 - [moveit](https://moveit.ros.org/documentation/concepts/) (To plan and execute movements)
 - [jsk_rviz_plugins](https://jsk-visualization.readthedocs.io/en/latest/jsk_rviz_plugins/index.html) (To display more informations in rviz)
+- [Git](https://github.com/git-guides/install-git) and [Git lfs](https://git-lfs.com/) (To download large files)
+- open3d
 
-1. Switch for a [real time kernel](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/real_time.md) since the ur_robot_driver requires it.
+1. ~~Switch for a [real time kernel](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/ur_robot_driver/doc/real_time.md) since the ur_robot_driver requires it.~~ Changed UR to FANUC
 
-2. Follow instructions from [ur_robot_diver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#building)'s github to install this package.
+2. ~~Follow instructions from [ur_robot_diver](https://github.com/UniversalRobots/Universal_Robots_ROS_Driver/blob/master/README.md#building)'s github to install this package.~~ Changed UR to FANUC
 
 3. To install all other ROS libraries (except ur_robot_driver) needed in one command:
 ```bash
 sudo apt-get install ros-noetic-pcl-ros ros-noetic-velodyne ros-noetic-librealsense2 ros-noetic-realsense2-camera ros-noetic-realsense2-description ros-noetic-vision-opencv ros-noetic-robot-localization ros-noetic-imu-filter-madgwick ros-noetic-jsk-rviz-plugins
 ```
 
-### Lucid ArenaSDK
+### Lucid ArenaSDK (used for Helios camera)
 
 1. Download the [ArenaSDK](https://thinklucid.com/arena-software-development-kit/) on the [download page](https://thinklucid.com/downloads-hub/) (You will need to create an account and login)
 2. Unzip the folder in your `home` repository
@@ -106,9 +108,9 @@ Note: Restart terminals to apply `.bashrc` changes.
 |    Hardware   |       IP      |      Mask     |
 | ------------- | ------------- | ------------- |
 | PC -> Velodyne lidar | 192.168.1.100  | 255.255.0.0 |
-| PC -> UR5e | 192.168.56.1 | 255.255.0.0 |
+| PC -> CRX-20ia/L | 192.168.56.1 | 255.255.0.0 |
 | Velodyne lidar | 192.168.1.201 | 255.255.0.0 |
-| UR5e | 192.168.56.101 | 255.255.0.0 |
+| CRX-20ia/L | 192.168.56.1 | 255.255.0.0 |
 | Helios2 | Local_link | 255.255.0.0 |
 3. Try to ping the hardware:
 ```bash
@@ -119,12 +121,44 @@ ping 192.168.56.101
 
 
 ## Usage
-Before any use with the UR5e robot, make shure that:
+Before using the CRX robot, make shure that:
 
-1. It is properly setup with the right IP adress
+1. It is properly setup with the right IP adress, 
 2. The robot is powered up and clear fault
-3. The program in the robot is `External control` with the correct IP adress
-4. The URDF correspond to the current coupling. The current urdf is for the first 3D printed version on the coupling.
+3. The program runing is ROS or ROSTRAJ
+
+### Using the project with force controle
+Using the robot to sand a UV exposed joint
+
+1. Make sure the space around the robot is clear and safe
+2. Move the robot in front of the wall and align the camera with the joint
+3. Run the ROS program on the CRX
+4. Launch the workcell planning
+```bash
+roslaunch pa_ctrl workcell_planning_execution.launch sim:=false robot_ip:=192.168.56.1 use_bswap:=false
+```
+5. Make sure the camera is connected and launch uv analysis
+```bash
+roslaunch pa_uv uv_camera_node.launch
+``` 
+6. Verify the boundary rectangle is aligne with the actual joint
+7. Send topic to start path planning and execution
+```bash
+rostopic pub -1 /console_traj_planner std_msgs/Empty
+```
+
+### Using the with move preset
+Using ros to move the robot
+
+1. Make sure the space around the robot is clear and safe
+2. Launch the move_preset script
+```bash
+rosrun pa_ctrl move_preset.py
+```
+3. Send the empty message to the topic corresponding to the chosen to reach
+```bash
+rostopic pub -1 /console_chosen_position std_msgs/Empty
+```
 
 ### Using the project with the rgb package
 ```bash
@@ -146,7 +180,6 @@ To save pictures, press `publish` button in the `save images` tab in Rviz. If a 
 ```bash
 roslaunch pa_tof tof_camera_node.launch
 ```
-TODO : In progress
 
 ### Using the project with the uv package
 ```bash
